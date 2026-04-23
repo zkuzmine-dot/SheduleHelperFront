@@ -1,10 +1,10 @@
-import { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
-import AuthContext from '../context/AuthContext';
+import { useState, useEffect } from 'react';
+import { usersAPI } from '../api/endpoints';
+import { useAuth } from '../hooks/useAuth';
 import { FiEdit, FiPlus, FiTrash, FiX, FiSearch } from 'react-icons/fi';
 
 function AdminUsersPage() {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -23,6 +23,7 @@ function AdminUsersPage() {
     password: '',
     telegram_id: '',
     role: 'student',
+    full_name: '',
     group_number: '',
     subgroup: '',
     department: '',
@@ -31,6 +32,7 @@ function AdminUsersPage() {
     username: '',
     telegram_id: '',
     role: '',
+    full_name: '',
     group_number: '',
     subgroup: '',
     department: '',
@@ -49,13 +51,7 @@ function AdminUsersPage() {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token');
-      const params = {};
-      if (selectedGroup) params.group_number = selectedGroup;
-      const response = await axios.get('https://theschedulehelper.hps-2.ru/users/', {
-        headers: { Authorization: `Bearer ${token}` },
-        params,
-      });
+      const response = await usersAPI.getAll(null, selectedGroup);
       setUsers(response.data);
       filterUsers(response.data, searchQuery);
     } catch (err) {
@@ -68,7 +64,8 @@ function AdminUsersPage() {
 
   const filterUsers = (usersList, query) => {
     const filtered = usersList.filter((u) =>
-      u.username.toLowerCase().includes(query.toLowerCase())
+      u.username.toLowerCase().includes(query.toLowerCase()) ||
+      (u.full_name && u.full_name.toLowerCase().includes(query.toLowerCase()))
     );
     setFilteredUsers(filtered);
   };
@@ -89,6 +86,7 @@ function AdminUsersPage() {
       password: '',
       telegram_id: '',
       role: 'student',
+      full_name: '',
       group_number: '',
       subgroup: '',
       department: '',
@@ -103,6 +101,7 @@ function AdminUsersPage() {
       username: user.username,
       telegram_id: user.telegram_id.toString(),
       role: user.role,
+      full_name: user.full_name || '',
       group_number: user.group_number || '',
       subgroup: user.subgroup ? user.subgroup.toString() : '',
       department: user.department || '',
@@ -157,20 +156,18 @@ function AdminUsersPage() {
     }
 
     try {
-      const token = localStorage.getItem('token');
       const newUser = {
         username: addFormData.username,
         password: addFormData.password,
         telegram_id: parseInt(addFormData.telegram_id),
         role: addFormData.role,
+        full_name: addFormData.full_name || null,
         group_number: addFormData.group_number || null,
         subgroup: addFormData.subgroup ? parseInt(addFormData.subgroup) : null,
         department: addFormData.department || null,
         notification_settings: JSON.stringify({ event_reminder: -1 }),
       };
-      await axios.post('https://theschedulehelper.hps-2.ru/users/', newUser, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await usersAPI.create(newUser);
       setAddModalOpen(false);
       setAddFormError('');
       fetchUsers();
@@ -189,18 +186,16 @@ function AdminUsersPage() {
     }
 
     try {
-      const token = localStorage.getItem('token');
       const updatedUser = {
         username: editFormData.username,
         telegram_id: parseInt(editFormData.telegram_id),
         role: editFormData.role,
+        full_name: editFormData.full_name || null,
         group_number: editFormData.group_number || null,
         subgroup: editFormData.subgroup ? parseInt(editFormData.subgroup) : null,
         department: editFormData.department || null,
       };
-      await axios.put(`https://theschedulehelper.hps-2.ru/users/${selectedUser.id}`, updatedUser, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await usersAPI.update(selectedUser.id, updatedUser);
       setEditModalOpen(false);
       setEditFormError('');
       fetchUsers();
@@ -213,10 +208,7 @@ function AdminUsersPage() {
   const confirmDelete = async () => {
     if (userToDelete) {
       try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`https://theschedulehelper.hps-2.ru/users/${userToDelete.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await usersAPI.delete(userToDelete.id);
         fetchUsers();
       } catch (err) {
         console.error('Ошибка удаления пользователя:', err);
@@ -293,7 +285,8 @@ function AdminUsersPage() {
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="font-medium">{user.username}</p>
+                  <p className="font-medium">{user.full_name || user.username}</p>
+                  <p className="text-sm text-gray-500">@{user.username}</p>
                   <p className="text-sm text-gray-600">Роль: {user.role}</p>
                   {user.group_number && (
                     <p className="text-sm text-gray-600">Группа: {user.group_number}</p>
@@ -403,6 +396,16 @@ function AdminUsersPage() {
                 </select>
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700">Полное имя</label>
+                <input
+                  type="text"
+                  name="full_name"
+                  value={addFormData.full_name}
+                  onChange={handleAddFormChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700">Группа</label>
                 <select
                   name="group_number"
@@ -508,6 +511,16 @@ function AdminUsersPage() {
                     <option key={role} value={role}>{role}</option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Полное имя</label>
+                <input
+                  type="text"
+                  name="full_name"
+                  value={editFormData.full_name}
+                  onChange={handleEditFormChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Группа</label>

@@ -1,15 +1,15 @@
-import { useState, useContext, useEffect } from 'react';
-import axios from 'axios';
-import AuthContext from '../context/AuthContext';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../hooks/useAuth';
 import { FiEdit, FiX } from 'react-icons/fi';
 
 function ProfilePage() {
-  const { user, setUser } = useContext(AuthContext);
+  const { user, changePassword } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState('');
 
   useEffect(() => {
@@ -28,34 +28,28 @@ function ProfilePage() {
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     if (!currentPassword || !newPassword || !confirmNewPassword) {
       setError('Все поля обязательны для заполнения');
+      setLoading(false);
       return;
     }
 
     if (currentPassword === newPassword) {
       setError('Новый пароль должен отличаться от текущего');
+      setLoading(false);
       return;
     }
 
     if (newPassword !== confirmNewPassword) {
       setError('Новые пароли не совпадают');
+      setLoading(false);
       return;
     }
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(
-        'https://theschedulehelper.hps-2.ru/users/me/password',
-        {
-          current_password: currentPassword,
-          new_password: newPassword,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await changePassword(currentPassword, newPassword);
       setIsModalOpen(false);
       setCurrentPassword('');
       setNewPassword('');
@@ -63,44 +57,68 @@ function ProfilePage() {
       showNotification('Пароль успешно изменён');
     } catch (err) {
       setError(err.response?.data?.detail || 'Не удалось изменить пароль');
+    } finally {
+      setLoading(false);
     }
   };
 
   if (!user) {
-    return <p>Загрузка...</p>;
+    return <p className="text-center mt-8">Загрузка...</p>;
   }
 
   return (
     <div className="p-4 max-w-md mx-auto relative">
       {notification && (
-        <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out z-50">
           {notification}
         </div>
       )}
 
-      <h2 className="text-2xl font-bold text-blue-600 mb-4 text-center">Профиль</h2>
-      <div className="space-y-4">
+      <h2 className="text-2xl font-bold text-blue-600 mb-6 text-center">Профиль</h2>
+      <div className="space-y-4 bg-white p-6 rounded-lg shadow-md">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Имя</label>
-          <p className="mt-1 p-2 border border-gray-300 rounded-md">{user.username}</p>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Имя пользователя</label>
+          <div className="p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-800">
+            {user.username}
+          </div>
+        </div>
+        {user.full_name && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">ФИО</label>
+            <div className="p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-800">
+              {user.full_name}
+            </div>
+          </div>
+        )}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Группа</label>
+          <div className="p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-800">
+            {user.group_number || 'Не указана'}
+          </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Группа</label>
-          <p className="mt-1 p-2 border border-gray-300 rounded-md">
-            {user.group_number || 'Не указана'}
-          </p>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Роль</label>
+          <div className="p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-800">
+            {user.role === 'admin' ? 'Администратор' : user.role === 'teacher' ? 'Преподаватель' : user.role === 'group_leader' ? 'Лидер группы' : 'Студент'}
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Создан</label>
+          <div className="p-3 bg-gray-50 border border-gray-300 rounded-md text-gray-800 text-sm">
+            {user.created_at && new Date(user.created_at).toLocaleString('ru-RU')}
+          </div>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          className="mt-6 w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition font-medium"
         >
-          Сменить пароль
+          Изменить пароль
         </button>
       </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Смена пароля</h3>
               <button
@@ -118,37 +136,40 @@ function ProfilePage() {
             </div>
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Текущий пароль</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Текущий пароль</label>
                 <input
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
+                  disabled={loading}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Новый пароль</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Новый пароль</label>
                 <input
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
+                  disabled={loading}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Подтвердить новый пароль</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Подтвердить новый пароль</label>
                 <input
                   type="password"
                   value={confirmNewPassword}
                   onChange={(e) => setConfirmNewPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
+                  disabled={loading}
                 />
               </div>
-              {error && <p className="text-red-500 text-sm">{error}</p>}
-              <div className="flex justify-end space-x-2">
+              {error && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</p>}
+              <div className="flex justify-end space-x-2 pt-4">
                 <button
                   type="button"
                   onClick={() => {
@@ -158,15 +179,17 @@ function ProfilePage() {
                     setNewPassword('');
                     setConfirmNewPassword('');
                   }}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md"
+                  disabled={loading}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition disabled:opacity-50"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                  disabled={loading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition disabled:opacity-50"
                 >
-                  Сохранить
+                  {loading ? 'Сохранение...' : 'Сохранить'}
                 </button>
               </div>
             </form>

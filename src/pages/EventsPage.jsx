@@ -1,12 +1,12 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
+import { eventsAPI } from '../api/endpoints';
+import { useAuth } from '../hooks/useAuth';
+import { FiEdit, FiPlus, FiTrash, FiX, FiCalendar, FiSettings } from 'react-icons/fi';
 import axios from 'axios';
-import AuthContext from '../context/AuthContext';
-import { FiEdit, FiPlus, FiTrash, FiX, FiSettings } from 'react-icons/fi';
-
 function EventsPage() {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [events, setEvents] = useState([]);
-  const [group, setGroup] = useState(user?.group_number || '');
+  const [group, setGroup] = useState(user?.group_number || 'ИВТ-21-1');
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -70,16 +70,9 @@ function EventsPage() {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('https://theschedulehelper.hps-2.ru/events/', {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { group_number: group || undefined },
-      });
-      console.log('Fetched events:', response.data);
+      const response = await eventsAPI.getAll(group);
       const sortedEvents = response.data.sort((a, b) => {
-        const dateA = new Date(a.start_datetime);
-        const dateB = new Date(b.start_datetime);
-        return dateA - dateB;
+        return new Date(a.start_datetime) - new Date(b.start_datetime);
       });
       setEvents(sortedEvents);
     } catch (err) {
@@ -138,13 +131,6 @@ function EventsPage() {
     if (!editFormData.title.trim()) return 'Название события обязательно';
     if (!editFormData.date) return 'Дата обязательна';
     if (!editFormData.time) return 'Время обязательно';
-    try {
-      const dateTime = new Date(`${editFormData.date}T${editFormData.time}`);
-      if (isNaN(dateTime.getTime())) throw new Error('Invalid date/time');
-    } catch {
-      return 'Неверный формат даты или времени';
-    }
-    if (!editFormData.group_number) return 'Номер группы обязателен';
     return '';
   };
 
@@ -152,13 +138,6 @@ function EventsPage() {
     if (!addFormData.title.trim()) return 'Название события обязательно';
     if (!addFormData.date) return 'Дата обязательна';
     if (!addFormData.time) return 'Время обязательно';
-    try {
-      const dateTime = new Date(`${addFormData.date}T${addFormData.time}`);
-      if (isNaN(dateTime.getTime())) throw new Error('Invalid date/time');
-    } catch {
-      return 'Неверный формат даты или времени';
-    }
-    if (!addFormData.group_number) return 'Номер группы обязателен';
     return '';
   };
 
@@ -171,16 +150,13 @@ function EventsPage() {
     }
 
     try {
-      const token = localStorage.getItem('token');
       const start_datetime = `${editFormData.date} ${editFormData.time}`;
-      await axios.put(`https://theschedulehelper.hps-2.ru/events/${selectedEvent.id}`, {
+      await eventsAPI.update(selectedEvent.id, {
         title: editFormData.title,
         event_type: editFormData.event_type,
         start_datetime,
-        group_number: editFormData.group_number,
+        group_number: selectedEvent.group_number,
         description: editFormData.description,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
       });
       setEditModalOpen(false);
       setEditFormError('');
@@ -200,18 +176,14 @@ function EventsPage() {
     }
 
     try {
-      const token = localStorage.getItem('token');
       const start_datetime = `${addFormData.date} ${addFormData.time}`;
-      const response = await axios.post('https://theschedulehelper.hps-2.ru/events/', {
+      await eventsAPI.create({
         title: addFormData.title,
         event_type: addFormData.event_type,
         start_datetime,
-        group_number: addFormData.group_number,
+        group_number: group,
         description: addFormData.description,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
       });
-      console.log('Added event response:', response.data);
       setAddModalOpen(false);
       setAddFormError('');
       fetchEvents();
@@ -230,10 +202,7 @@ function EventsPage() {
   const confirmDelete = async () => {
     if (eventToDelete) {
       try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`https://theschedulehelper.hps-2.ru/events/${eventToDelete.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await eventsAPI.delete(eventToDelete.id);
         fetchEvents();
       } catch (err) {
         console.error('Ошибка удаления события:', err);
@@ -251,24 +220,46 @@ function EventsPage() {
   };
 
   const handleReminderSubmit = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.put('https://theschedulehelper.hps-2.ru/users/me/notification-settings', {
-        notification_settings: JSON.stringify({ event_reminder: reminderSetting }),
-      }, {
+  try {
+    const accessToken = localStorage.getItem('accessToken');   // ← важно: access_token
+
+    if (!accessToken) {
+      setError('Сессия истекла. Пожалуйста, войдите заново.');
+      return;
+    }
+
+    await axios.put(
+      'http://localhost:8000/users/me/notification-settings',
+      {
+        notification_settings: JSON.stringify({ 
+          event_reminder: Number(reminderSetting) 
+        })
+      },
+      {
         headers: {
-          Authorization: `Bearer ${token}`,
-          'Accept': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-      });
-      setReminderModalOpen(false);
-      showNotification('Настройки напоминаний обновлены');
-    } catch (err) {
-      console.error('Ошибка обновления настроек напоминаний:', err.response?.data || err.message);
-      setError('Не удалось обновить настройки напоминаний: ' + (err.response?.data?.detail || err.message));
+      }
+    );
+
+    setReminderModalOpen(false);
+    showNotification('Настройки напоминаний успешно обновлены');
+    
+  } catch (err) {
+    console.error('Полная ошибка:', err);
+
+    if (err.response?.status === 401) {
+      setError('Сессия истекла. Пожалуйста, войдите заново.');
+      // Можно автоматически вызвать logout
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+    } else {
+      const errorMsg = err.response?.data?.detail || err.message || 'Неизвестная ошибка';
+      setError(`Не удалось обновить настройки: ${errorMsg}`);
     }
-  };
+  }
+};
 
   return (
     <div className="p-4 max-w-md mx-auto relative">

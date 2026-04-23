@@ -1,21 +1,29 @@
-import { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
-import AuthContext from '../context/AuthContext';
+import { useState, useEffect } from 'react';
+import { schedulesAPI } from '../api/endpoints';
+import { useAuth } from '../hooks/useAuth';
 import { FiEdit, FiPlus, FiTrash, FiX } from 'react-icons/fi';
 
 function SchedulePage() {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [schedules, setSchedules] = useState([]);
   const [group, setGroup] = useState(user?.group_number || 'ИБ-11БО');
   const [week, setWeek] = useState('current');
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const groups = ['ИБ-11БО','ИБ-21БО','ИБ-31БО','ИБ-41БО','КБ-11СО','КБ-21СО','КБ-31СО','КБ-41СО','КБ-51СО','МКН-11БО','MKH-21БО','MKH-31БО','MKH-41БО','ПМИ-11БО','ПМИ-12БО','ПМИ-13БО','ПМИ-21БО','ПМИ-22БО','ПМИ-23БО','ПМИ-31БО','ПМИ-32БО','ПМИ-33БО','ПМИ-41БО','ПМИ-42БО','ПМИ-43БО','ПМИ-11МО','МКН-11МО','ИБМ-11МО'];
+  const days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
+  const weekTypes = ['denominator', 'numerator', 'both'];
+  const today = new Date().getDay();
+  const currentDayIndex = today === 0 ? 6 : today - 1;
+
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [scheduleToDelete, setScheduleToDelete] = useState(null);
+  const [editFormError, setEditFormError] = useState('');
+  const [addFormError, setAddFormError] = useState('');
   const [editFormData, setEditFormData] = useState({
     subject: '',
     start_time: '',
@@ -35,14 +43,6 @@ function SchedulePage() {
     day_of_week: '1',
     week_type: 'denominator',
   });
-  const [editFormError, setEditFormError] = useState('');
-  const [addFormError, setAddFormError] = useState('');
-
-  const groups = ['ИБ-11БО','ИБ-21БО','ИБ-31БО','ИБ-41БО','КБ-11СО','КБ-21СО','КБ-31СО','КБ-41СО','КБ-51СО','МКН-11БО','MKH-21БО','MKH-31БО','MKH-41БО','ПМИ-11БО','ПМИ-12БО','ПМИ-13БО','ПМИ-21БО','ПМИ-22БО','ПМИ-23БО','ПМИ-31БО','ПМИ-32БО','ПМИ-33БО','ПМИ-41БО','ПМИ-42БО','ПМИ-43БО','ПМИ-11МО','МКН-11МО','ИБМ-11МО'];
-  const days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
-  const weekTypes = ['denominator', 'numerator', 'both'];
-  const today = new Date().getDay();
-  const currentDayIndex = today === 0 ? 6 : today - 1;
 
   useEffect(() => {
     fetchSchedules();
@@ -52,14 +52,7 @@ function SchedulePage() {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token');
-      // Swap the week parameter to reverse numerator/denominator logic
-      const swappedWeek = week === 'current' ? 'next' : 'current';
-      const response = await axios.get('https://theschedulehelper.hps-2.ru/schedules/', {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { group_number: group, week: swappedWeek },
-      });
-      console.log('Fetched schedules:', response.data);
+      const response = await schedulesAPI.getAll(group, week);
       setSchedules(response.data);
     } catch (err) {
       console.error('Ошибка загрузки расписания:', err);
@@ -146,7 +139,6 @@ function SchedulePage() {
     }
 
     try {
-      const token = localStorage.getItem('token');
       const updatedSchedule = {
         group_number: selectedSchedule.group_number,
         day_of_week: selectedSchedule.day_of_week,
@@ -158,13 +150,8 @@ function SchedulePage() {
         teacher_name: editFormData.teacher_name || null,
         subgroup: editFormData.subgroup ? parseInt(editFormData.subgroup) : null,
         week_type: editFormData.week_type,
-        valid_from: selectedSchedule.valid_from,
-        valid_to: selectedSchedule.valid_to,
-        is_active: selectedSchedule.is_active,
       };
-      await axios.put(`https://theschedulehelper.hps-2.ru/schedules/${selectedSchedule.id}`, updatedSchedule, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await schedulesAPI.update(selectedSchedule.id, updatedSchedule);
       setEditModalOpen(false);
       setEditFormError('');
       fetchSchedules();
@@ -183,7 +170,6 @@ function SchedulePage() {
     }
 
     try {
-      const token = localStorage.getItem('token');
       const newSchedule = {
         group_number: group,
         day_of_week: parseInt(addFormData.day_of_week),
@@ -195,14 +181,8 @@ function SchedulePage() {
         teacher_name: addFormData.teacher_name || null,
         subgroup: addFormData.subgroup ? parseInt(addFormData.subgroup) : null,
         week_type: addFormData.week_type,
-        valid_from: '2025-01-01',
-        valid_to: '2025-12-31',
-        is_active: true,
       };
-      const response = await axios.post('https://theschedulehelper.hps-2.ru/schedules/', newSchedule, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log('Added schedule response:', response.data);
+      await schedulesAPI.create(newSchedule);
       setAddModalOpen(false);
       setAddFormError('');
       fetchSchedules();
@@ -221,10 +201,7 @@ function SchedulePage() {
   const confirmDelete = async () => {
     if (scheduleToDelete) {
       try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`https://theschedulehelper.hps-2.ru/schedules/${scheduleToDelete.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await schedulesAPI.delete(scheduleToDelete.id);
         fetchSchedules();
       } catch (err) {
         console.error('Ошибка удаления расписания:', err);
@@ -254,16 +231,16 @@ function SchedulePage() {
     return acc;
   }, Array(7).fill(null));
 
-  console.log('Grouped schedules:', groupedSchedules);
+  const canEdit = user?.role === 'admin' || user?.role === 'teacher' || (user?.role === 'group_leader' && user?.group_number === group);
 
   return (
     <div className="p-4 max-w-md mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0">
         <h2 className="text-xl font-bold text-blue-600">Расписание</h2>
-        {(user?.role === 'admin' || user?.role === 'teacher' || (user?.role === 'group_leader' && user?.group_number === group)) && (
+        {canEdit && (
           <button
             onClick={handleEditToggle}
-            className="p-2 bg-blue-600 text-white rounded-full"
+            className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition"
           >
             {isEditing ? <FiX size={20} /> : <FiEdit size={20} />}
           </button>
@@ -273,7 +250,7 @@ function SchedulePage() {
         <select
           value={group}
           onChange={(e) => setGroup(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           {groups.map((g) => (
             <option key={g} value={g}>
@@ -284,14 +261,14 @@ function SchedulePage() {
         <select
           value={week}
           onChange={(e) => setWeek(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="current">Текущая неделя</option>
           <option value="next">Следующая неделя</option>
         </select>
       </div>
       {loading ? (
-        <p className="text-center">Загрузка...</p>
+        <p className="text-center text-gray-600">Загрузка...</p>
       ) : error ? (
         <p className="text-center text-red-500">{error}</p>
       ) : schedules.length === 0 ? (
@@ -302,17 +279,17 @@ function SchedulePage() {
             <div
               key={day}
               className={`p-4 rounded-lg ${
-                index === currentDayIndex ? 'bg-blue-100' : 'bg-white'
+                index === currentDayIndex ? 'bg-blue-100 border-l-4 border-blue-500' : 'bg-white'
               } shadow-md`}
             >
-              <h3 className="text-lg font-semibold">{day}</h3>
+              <h3 className="text-lg font-semibold text-gray-800">{day}</h3>
               {groupedSchedules[index]?.length > 0 ? (
                 groupedSchedules[index].map((schedule) => (
                   <div
                     key={schedule.id}
-                    className="mt-2 p-2 border-l-4 border-blue-500 relative"
+                    className="mt-2 p-2 border-l-4 border-blue-500 bg-gray-50 relative"
                   >
-                    <p className="font-medium">{schedule.subject}</p>
+                    <p className="font-medium text-gray-800">{schedule.subject}</p>
                     <p className="text-sm text-gray-600">
                       {schedule.start_time} - {schedule.end_time}
                     </p>
@@ -325,17 +302,17 @@ function SchedulePage() {
                     {schedule.subgroup && (
                       <p className="text-sm text-gray-600">Подгруппа: {schedule.subgroup}</p>
                     )}
-                    {isEditing && (
+                    {isEditing && canEdit && (
                       <div className="absolute top-2 right-2 flex space-x-2">
                         <button
                           onClick={() => handleEditSchedule(schedule)}
-                          className="text-blue-600"
+                          className="text-blue-600 hover:text-blue-800"
                         >
                           <FiEdit size={16} />
                         </button>
                         <button
                           onClick={() => handleDeleteSchedule(schedule.id)}
-                          className="text-red-600"
+                          className="text-red-600 hover:text-red-800"
                         >
                           <FiTrash size={16} />
                         </button>
@@ -350,10 +327,10 @@ function SchedulePage() {
           ))}
         </div>
       )}
-      {isEditing && (
+      {isEditing && canEdit && (
         <button
           onClick={handleAddSchedule}
-          className="fixed bottom-4 right-4 p-4 bg-blue-600 text-white rounded-full shadow-lg"
+          className="fixed bottom-4 right-4 p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition z-40"
         >
           <FiPlus size={24} />
         </button>
@@ -362,7 +339,7 @@ function SchedulePage() {
       {/* Edit Modal */}
       {editModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Редактировать расписание</h3>
               <button
@@ -478,7 +455,7 @@ function SchedulePage() {
       {/* Add Modal */}
       {addModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Добавить расписание</h3>
               <button
@@ -609,29 +586,22 @@ function SchedulePage() {
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Подтверждение удаления</h3>
-              <button
-                onClick={cancelDelete}
-                className="text-gray-600 hover:text-gray-800"
-              >
-                <FiX size={20} />
-              </button>
-            </div>
-            <p className="mb-4">Вы уверены, что хотите удалить расписание "<strong>{scheduleToDelete?.subject}</strong>"?</p>
+          <div className="bg-white p-6 rounded-lg max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Удалить расписание?</h3>
+            <p className="text-gray-600 mb-4">Вы уверены, что хотите удалить этот предмет?</p>
+            <p className="font-medium text-gray-800 mb-6">{scheduleToDelete?.subject}</p>
             <div className="flex justify-end space-x-2">
               <button
-                onClick={cancelDelete}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md"
+                onClick={() => setDeleteModalOpen(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition"
               >
-                Нет
+                Отмена
               </button>
               <button
                 onClick={confirmDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-md"
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
               >
-                Да
+                Удалить
               </button>
             </div>
           </div>

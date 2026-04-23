@@ -1,14 +1,13 @@
-import { useState, useContext, useEffect } from 'react';
-import axios from 'axios';
-import AuthContext from '../context/AuthContext';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [telegramId, setTelegramId] = useState(null);
-  const { setUser } = useContext(AuthContext);
+  const { login, error, clearError } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,42 +22,30 @@ function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      const loginData = new URLSearchParams({
-        username,
-        password,
-      }).toString();
-
-      const url = telegramId
-        ? `https://theschedulehelper.hps-2.ru/token?tgid=${telegramId}`
-        : 'https://theschedulehelper.hps-2.ru/token';
-
-      const config = {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      };
-
-      const response = await axios.post(url, loginData, config);
-      const { access_token } = response.data;
-      localStorage.setItem('token', access_token);
-      const userResponse = await axios.get('https://theschedulehelper.hps-2.ru/users/me', {
-        headers: { Authorization: `Bearer ${access_token}` },
-      });
-      setUser(userResponse.data);
+      clearError();
+      await login(username, password, telegramId);
       navigate('/');
     } catch (err) {
-      if (err.response && err.response.status === 429) {
-        setError('Слишком много попыток входа. Попробуйте позже.');
-      } else {
-        setError('Неверное имя пользователя или пароль');
-      }
+      console.error('Login failed:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center text-blue-600 mb-6">Вход</h2>
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-600 to-blue-800">
+      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
+        <h2 className="text-3xl font-bold text-center text-blue-600 mb-2">ScheduleHelper</h2>
+        <p className="text-center text-gray-600 mb-6">Помощник расписания</p>
+        
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-gray-700">
@@ -69,10 +56,13 @@ function LoginPage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              placeholder="Введите имя пользователя"
               required
+              disabled={loading}
             />
           </div>
+          
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Пароль
@@ -82,17 +72,27 @@ function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              placeholder="Введите пароль"
               required
+              disabled={loading}
             />
           </div>
+          
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={loading}
+            className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition disabled:bg-blue-400 disabled:cursor-not-allowed font-medium"
           >
-            Войти
+            {loading ? 'Загрузка...' : 'Войти'}
           </button>
         </form>
+        
+        {telegramId && (
+          <p className="text-center text-sm text-gray-500 mt-4">
+            Telegram ID: {telegramId}
+          </p>
+        )}
       </div>
     </div>
   );
