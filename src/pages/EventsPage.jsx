@@ -229,7 +229,7 @@ function EventsPage() {
     }
 
     await axios.put(
-      'http://localhost:8000/users/me/notification-settings',
+      'https://timeofthestars.online/users/me/notification-settings',
       {
         notification_settings: JSON.stringify({ 
           event_reminder: Number(reminderSetting) 

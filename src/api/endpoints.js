@@ -108,12 +108,12 @@ export const createWebSocketChat = (roomId, accessToken) => {
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
   
   // Get API base URL or default to localhost:8000
-  let apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  let apiBase = import.meta.env.VITE_API_BASE_URL || 'https://timeofthestars.online';
   
   // Remove protocol prefix from the URL
   let host = apiBase.replace(/^(https?|wss?):\/\//, '');
   
-  const wsUrl = `${protocol}://${host}/ws/chat?room=${encodeURIComponent(roomId)}&token=${encodeURIComponent(accessToken)}`;
+  const wsUrl = `${protocol}://${host}:4443/ws/chat?room=${encodeURIComponent(roomId)}&token=${encodeURIComponent(accessToken)}`;
   return new WebSocket(wsUrl);
 };
 
