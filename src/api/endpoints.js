@@ -113,7 +113,7 @@ export const createWebSocketChat = (roomId, accessToken) => {
   // Remove protocol prefix from the URL
   let host = apiBase.replace(/^(https?|wss?):\/\//, '');
   
-  const wsUrl = `${protocol}://${host}:4443/ws/chat?room=${encodeURIComponent(roomId)}&token=${encodeURIComponent(accessToken)}`;
+  const wsUrl = `${protocol}://${host}/ws/chat?room=${encodeURIComponent(roomId)}&token=${encodeURIComponent(accessToken)}`;
   return new WebSocket(wsUrl);
 };
 
