@@ -2,12 +2,17 @@
   RewriteEngine On
   RewriteBase /
 
+  # Если файл или папка реально существуют — отдаём их как есть
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
+  # Всё остальное (роуты React Router) отправляем на index.html
   RewriteRule ^ index.html [L]
 </IfModule>
 
-AddType application/javascript .js
-AddType application/javascript .mjs
+# Принудительно правильные MIME-типы для JS (на Timeweb иногда помогает)
+<IfModule mod_mime.c>
+  AddType application/javascript .js
+  AddType application/javascript .mjs
+</IfModule>
