@@ -177,18 +177,18 @@ const ChatWindow = ({ roomId, chatData }) => {
   return (
     <div className="flex-1 flex flex-col h-full">
       {/* Заголовок */}
-      <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-3 shadow-sm flex flex-col items-center">
-        <h2 className="text-lg font-semibold text-gray-800 text-center">
+      <div className="flex-shrink-0 bg-white border-b border-slate-100 px-5 py-3.5 flex items-center justify-between">
+        <h2 className="font-semibold text-slate-800 text-sm">
           {chatData?.name || roomId
             .replace('group:', '')
             .replace('private:', '')
-            .replace(/_/g, ' - ')
+            .replace(/_/g, ' — ')
             .replace('teachers', 'Чат преподавателей')}
         </h2>
         {wsError && (
-          <p className="text-sm text-red-500 mt-1">
-            ⚠️ Ошибка подключения. Попробуйте обновить страницу.
-          </p>
+          <span className="text-xs text-red-500 bg-red-50 px-2.5 py-1 rounded-lg">
+            Нет соединения
+          </span>
         )}
       </div>
 
@@ -198,7 +198,7 @@ const ChatWindow = ({ roomId, chatData }) => {
       </div>
 
       {/* Сообщения */}
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+      <div className="flex-1 overflow-y-auto p-4 bg-slate-50">
         {loading ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             Загрузка сообщений...

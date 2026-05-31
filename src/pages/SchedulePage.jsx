@@ -233,96 +233,130 @@ function SchedulePage() {
 
   const canEdit = user?.role === 'admin' || user?.role === 'teacher' || (user?.role === 'group_leader' && user?.group_number === group);
 
+  const weekTypeLabel = {
+    denominator: { text: 'Знам.', cls: 'bg-purple-100 text-purple-700' },
+    numerator: { text: 'Числ.', cls: 'bg-green-100 text-green-700' },
+    both: { text: 'Обе', cls: 'bg-gray-100 text-gray-600' },
+  };
+
   return (
-    <div className="p-4 max-w-md mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0">
-        <h2 className="text-xl font-bold text-blue-600">Расписание</h2>
+    <div className="p-4 sm:p-6 max-w-2xl mx-auto">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-5 gap-2">
+        <h2 className="text-2xl font-bold text-gray-800">Расписание</h2>
         {canEdit && (
           <button
             onClick={handleEditToggle}
-            className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition"
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
+              isEditing
+                ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
           >
-            {isEditing ? <FiX size={20} /> : <FiEdit size={20} />}
+            {isEditing ? <><FiX size={16} /> Завершить</> : <><FiEdit size={16} /> Редактировать</>}
           </button>
         )}
       </div>
-      <div className="flex flex-col space-y-2 mb-4">
+      <div className="flex flex-col sm:flex-row gap-2 mb-5">
         <select
           value={group}
           onChange={(e) => setGroup(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
         >
           {groups.map((g) => (
-            <option key={g} value={g}>
-              {g}
-            </option>
+            <option key={g} value={g}>{g}</option>
           ))}
         </select>
         <select
           value={week}
           onChange={(e) => setWeek(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
         >
           <option value="current">Текущая неделя</option>
           <option value="next">Следующая неделя</option>
         </select>
       </div>
       {loading ? (
-        <p className="text-center text-gray-600">Загрузка...</p>
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
       ) : error ? (
-        <p className="text-center text-red-500">{error}</p>
+        <div className="text-center py-12 text-red-500 bg-red-50 rounded-lg">{error}</div>
       ) : schedules.length === 0 ? (
-        <p className="text-center text-gray-500">Нет расписания для выбранной группы и недели</p>
+        <div className="text-center py-12 text-gray-400 bg-white rounded-lg shadow-sm">Нет расписания для выбранной группы и недели</div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {days.map((day, index) => (
             <div
               key={day}
-              className={`p-4 rounded-lg ${
-                index === currentDayIndex ? 'bg-blue-100 border-l-4 border-blue-500' : 'bg-white'
-              } shadow-md`}
+              className={`rounded-xl shadow-sm overflow-hidden ${
+                index === currentDayIndex
+                  ? 'ring-2 ring-blue-500'
+                  : 'bg-white'
+              }`}
             >
-              <h3 className="text-lg font-semibold text-gray-800">{day}</h3>
-              {groupedSchedules[index]?.length > 0 ? (
-                groupedSchedules[index].map((schedule) => (
-                  <div
-                    key={schedule.id}
-                    className="mt-2 p-2 border-l-4 border-blue-500 bg-gray-50 relative"
-                  >
-                    <p className="font-medium text-gray-800">{schedule.subject}</p>
-                    <p className="text-sm text-gray-600">
-                      {schedule.start_time} - {schedule.end_time}
-                    </p>
-                    {schedule.classroom && (
-                      <p className="text-sm text-gray-600">Ауд: {schedule.classroom}</p>
-                    )}
-                    {schedule.teacher_name && (
-                      <p className="text-sm text-gray-600">{schedule.teacher_name}</p>
-                    )}
-                    {schedule.subgroup && (
-                      <p className="text-sm text-gray-600">Подгруппа: {schedule.subgroup}</p>
-                    )}
-                    {isEditing && canEdit && (
-                      <div className="absolute top-2 right-2 flex space-x-2">
-                        <button
-                          onClick={() => handleEditSchedule(schedule)}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <FiEdit size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteSchedule(schedule.id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <FiTrash size={16} />
-                        </button>
+              <div className={`px-4 py-2.5 flex items-center gap-2 ${
+                index === currentDayIndex ? 'bg-blue-600 text-white' : 'bg-gray-50 border-b border-gray-100'
+              }`}>
+                <h3 className="font-semibold text-sm uppercase tracking-wide">{day}</h3>
+                {index === currentDayIndex && <span className="text-xs bg-blue-500 px-2 py-0.5 rounded-full">Сегодня</span>}
+              </div>
+              <div className={index === currentDayIndex ? 'bg-white' : ''}>
+                {groupedSchedules[index]?.length > 0 ? (
+                  groupedSchedules[index].map((schedule) => (
+                    <div
+                      key={schedule.id}
+                      className="flex items-start gap-3 px-4 py-3 border-b border-gray-50 last:border-0 relative group"
+                    >
+                      <div className="flex-shrink-0 text-center min-w-[52px]">
+                        <p className="text-xs font-semibold text-blue-600">{schedule.start_time}</p>
+                        <p className="text-xs text-gray-400">{schedule.end_time}</p>
                       </div>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-gray-500 mt-2">Нет занятий</p>
-              )}
+                      <div className="w-px self-stretch bg-blue-200 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-800 text-sm">{schedule.subject}</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {schedule.classroom && (
+                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                              Ауд. {schedule.classroom}
+                            </span>
+                          )}
+                          {schedule.teacher_name && (
+                            <span className="text-xs text-gray-500">{schedule.teacher_name}</span>
+                          )}
+                          {schedule.subgroup && (
+                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                              Подгр. {schedule.subgroup}
+                            </span>
+                          )}
+                          {schedule.week_type && schedule.week_type !== 'both' && (
+                            <span className={`text-xs px-2 py-0.5 rounded font-medium ${weekTypeLabel[schedule.week_type]?.cls}`}>
+                              {weekTypeLabel[schedule.week_type]?.text}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {isEditing && canEdit && (
+                        <div className="flex gap-1 flex-shrink-0">
+                          <button
+                            onClick={() => handleEditSchedule(schedule)}
+                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded transition"
+                          >
+                            <FiEdit size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSchedule(schedule.id)}
+                            className="p-1.5 text-red-500 hover:bg-red-50 rounded transition"
+                          >
+                            <FiTrash size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-gray-400 px-4 py-3">Нет занятий</p>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -338,89 +372,89 @@ function SchedulePage() {
 
       {/* Edit Modal */}
       {editModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full mx-4 overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Редактировать расписание</h3>
               <button
                 onClick={() => setEditModalOpen(false)}
-                className="text-gray-600 hover:text-gray-800"
+                className="text-slate-400 hover:text-slate-700 transition"
               >
                 <FiX size={20} />
               </button>
             </div>
             <form onSubmit={handleEditFormSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Предмет</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Предмет</label>
                 <input
                   type="text"
                   name="subject"
                   value={editFormData.subject}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Время начала</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Время начала</label>
                 <input
                   type="time"
                   name="start_time"
                   value={editFormData.start_time}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Время окончания</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Время окончания</label>
                 <input
                   type="time"
                   name="end_time"
                   value={editFormData.end_time}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Аудитория</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Аудитория</label>
                 <input
                   type="text"
                   name="classroom"
                   value={editFormData.classroom}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Преподаватель</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Преподаватель</label>
                 <input
                   type="text"
                   name="teacher_name"
                   value={editFormData.teacher_name}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Подгруппа</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Подгруппа</label>
                 <input
                   type="number"
                   name="subgroup"
                   value={editFormData.subgroup}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   min="1"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Тип недели</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Тип недели</label>
                 <select
                   name="week_type"
                   value={editFormData.week_type}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 >
                   {weekTypes.map((type) => (
                     <option key={type} value={type}>
@@ -436,13 +470,13 @@ function SchedulePage() {
                 <button
                   type="button"
                   onClick={() => setEditModalOpen(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md"
+                  className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition font-medium text-sm"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                  className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium text-sm"
                 >
                   Сохранить
                 </button>
@@ -454,89 +488,89 @@ function SchedulePage() {
 
       {/* Add Modal */}
       {addModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full mx-4 overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Добавить расписание</h3>
               <button
                 onClick={() => setAddModalOpen(false)}
-                className="text-gray-600 hover:text-gray-800"
+                className="text-slate-400 hover:text-slate-700 transition"
               >
                 <FiX size={20} />
               </button>
             </div>
             <form onSubmit={handleAddFormSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Предмет</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Предмет</label>
                 <input
                   type="text"
                   name="subject"
                   value={addFormData.subject}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Время начала</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Время начала</label>
                 <input
                   type="time"
                   name="start_time"
                   value={addFormData.start_time}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Время окончания</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Время окончания</label>
                 <input
                   type="time"
                   name="end_time"
                   value={addFormData.end_time}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Аудитория</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Аудитория</label>
                 <input
                   type="text"
                   name="classroom"
                   value={addFormData.classroom}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Преподаватель</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Преподаватель</label>
                 <input
                   type="text"
                   name="teacher_name"
                   value={addFormData.teacher_name}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Подгруппа</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Подгруппа</label>
                 <input
                   type="number"
                   name="subgroup"
                   value={addFormData.subgroup}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   min="1"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">День недели</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">День недели</label>
                 <select
                   name="day_of_week"
                   value={addFormData.day_of_week}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 >
                   {Array.from({ length: 7 }, (_, i) => i + 1).map((num) => (
                     <option key={num} value={num}>
@@ -546,12 +580,12 @@ function SchedulePage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Тип недели</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Тип недели</label>
                 <select
                   name="week_type"
                   value={addFormData.week_type}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 >
                   {weekTypes.map((type) => (
                     <option key={type} value={type}>
@@ -567,13 +601,13 @@ function SchedulePage() {
                 <button
                   type="button"
                   onClick={() => setAddModalOpen(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md"
+                  className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition font-medium text-sm"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                  className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium text-sm"
                 >
                   Добавить
                 </button>
@@ -585,8 +619,8 @@ function SchedulePage() {
 
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-sm w-full mx-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-sm w-full mx-4">
             <h3 className="text-lg font-semibold mb-4">Удалить расписание?</h3>
             <p className="text-gray-600 mb-4">Вы уверены, что хотите удалить этот предмет?</p>
             <p className="font-medium text-gray-800 mb-6">{scheduleToDelete?.subject}</p>
@@ -599,7 +633,7 @@ function SchedulePage() {
               </button>
               <button
                 onClick={confirmDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
+                className="px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition font-medium text-sm"
               >
                 Удалить
               </button>

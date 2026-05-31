@@ -4,49 +4,37 @@ import { useAuth } from '../../hooks/useAuth';
 const MessageItem = ({ message }) => {
   const { user } = useAuth();
   const isOwn = message.sender_id === user?.id;
-  const isSystemMessage = message.sender_id === null;
+  const isSystem = message.sender_id === null;
 
-  // Форматирование времени
-  const formatTime = (isoString) => {
-    const date = new Date(isoString);
-    return date.toLocaleTimeString('ru-RU', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  const formatTime = (iso) =>
+    new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
-  if (isSystemMessage) {
+  if (isSystem) {
     return (
-      <div className="flex justify-center my-4">
-        <div className="bg-gray-200 text-gray-600 text-sm px-3 py-1 rounded-full max-w-xs text-center">
+      <div className="flex justify-center my-3">
+        <span className="bg-slate-100 text-slate-500 text-xs px-3 py-1 rounded-full">
           {message.content}
-        </div>
+        </span>
       </div>
     );
   }
 
   return (
-    <div
-      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4 animate-fade-in`}
-    >
+    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3 animate-fade-in`}>
       <div
-        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+        className={`max-w-xs lg:max-w-md px-4 py-2.5 rounded-2xl text-sm ${
           isOwn
-            ? 'bg-blue-500 text-white rounded-br-none'
-            : 'bg-gray-200 text-gray-800 rounded-bl-none'
+            ? 'bg-blue-600 text-white rounded-br-sm'
+            : 'bg-white text-slate-800 rounded-bl-sm shadow-sm border border-slate-100'
         }`}
       >
         {!isOwn && (
-          <p className="text-sm font-semibold text-gray-600 mb-1">
+          <p className="text-xs font-semibold text-blue-600 mb-1">
             {message.sender_full_name}
           </p>
         )}
-        <p className="break-words">{message.content}</p>
-        <p
-          className={`text-xs mt-1 ${
-            isOwn ? 'text-blue-100' : 'text-gray-500'
-          }`}
-        >
+        <p className="break-words leading-relaxed">{message.content}</p>
+        <p className={`text-xs mt-1 ${isOwn ? 'text-blue-200' : 'text-slate-400'}`}>
           {formatTime(message.created_at)}
         </p>
       </div>

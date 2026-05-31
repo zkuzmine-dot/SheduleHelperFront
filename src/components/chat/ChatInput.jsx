@@ -5,7 +5,6 @@ const ChatInput = ({ onSendMessage, disabled = false }) => {
   const [message, setMessage] = useState('');
   const textareaRef = useRef(null);
 
-  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -15,14 +14,11 @@ const ChatInput = ({ onSendMessage, disabled = false }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const trimmedMessage = message.trim();
-    
-    if (trimmedMessage && !disabled) {
-      onSendMessage(trimmedMessage);
+    const trimmed = message.trim();
+    if (trimmed && !disabled) {
+      onSendMessage(trimmed);
       setMessage('');
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-      }
+      if (textareaRef.current) textareaRef.current.style.height = 'auto';
     }
   };
 
@@ -34,24 +30,24 @@ const ChatInput = ({ onSendMessage, disabled = false }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border-t border-gray-200 bg-white p-4">
-      <div className="flex gap-2">
+    <form onSubmit={handleSubmit} className="border-t border-slate-100 bg-white p-3">
+      <div className="flex gap-2 items-end">
         <textarea
           ref={textareaRef}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Напишите сообщение"
+          placeholder={disabled ? 'Нет соединения...' : 'Напишите сообщение...'}
           disabled={disabled}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500 max-h-32"
+          className="flex-1 px-4 py-2.5 border border-slate-200 rounded-2xl resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition disabled:bg-slate-50 disabled:text-slate-400 max-h-32 bg-white"
           rows="1"
         />
         <button
           type="submit"
           disabled={disabled || !message.trim()}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition flex items-center justify-center"
+          className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-slate-200 disabled:cursor-not-allowed transition flex items-center justify-center flex-shrink-0"
         >
-          <IoSend size={20} />
+          <IoSend size={18} />
         </button>
       </div>
     </form>

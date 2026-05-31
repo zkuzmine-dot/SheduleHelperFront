@@ -37,11 +37,11 @@ function EventsPage() {
   const [editFormError, setEditFormError] = useState('');
   const [addFormError, setAddFormError] = useState('');
 
-  const eventColors = {
-    'Тест': 'bg-yellow-200',
-    'Контрольная': 'bg-orange-200',
-    'Экзамен': 'bg-red-200',
-    'Другое': 'bg-gray-200',
+  const eventStyles = {
+    'Тест':       { card: 'border-l-4 border-yellow-400 bg-white', badge: 'bg-yellow-100 text-yellow-700' },
+    'Контрольная':{ card: 'border-l-4 border-orange-400 bg-white', badge: 'bg-orange-100 text-orange-700' },
+    'Экзамен':    { card: 'border-l-4 border-red-400 bg-white',    badge: 'bg-red-100 text-red-700' },
+    'Другое':     { card: 'border-l-4 border-gray-300 bg-white',   badge: 'bg-gray-100 text-gray-600' },
   };
   const eventTypes = ['Тест', 'Контрольная', 'Экзамен', 'Другое'];
   const reminderOptions = [
@@ -262,37 +262,38 @@ function EventsPage() {
 };
 
   return (
-    <div className="p-4 max-w-md mx-auto relative">
+    <div className="p-4 sm:p-6 max-w-xl mx-auto relative">
       {notification && (
-        <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out z-50">
           {notification}
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0">
-        <h2 className="text-xl font-bold text-blue-600">События</h2>
-        <div className="flex space-x-2">
+      <div className="flex justify-between items-center mb-5">
+        <h2 className="text-2xl font-bold text-gray-800">События</h2>
+        <div className="flex gap-1">
           <button
             onClick={() => setReminderModalOpen(true)}
-            className="p-2 text-gray-600 hover:text-gray-800"
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition"
+            title="Настройки напоминаний"
           >
             <FiSettings size={20} />
           </button>
           {(user?.role === 'admin' || user?.role === 'teacher' || user?.role === 'group_leader') && (
             <button
               onClick={handleEditToggle}
-              className="p-2 text-gray-600 hover:text-gray-800"
+              className={`p-2 rounded-lg transition ${isEditing ? 'bg-gray-200 text-gray-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
             >
               {isEditing ? <FiX size={20} /> : <FiEdit size={20} />}
             </button>
           )}
         </div>
       </div>
-      <div className="flex flex-col space-y-2 mb-4">
+      <div className="mb-5">
         <select
           value={group}
           onChange={(e) => setGroup(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
           disabled={user?.role === 'student' || user?.role === 'group_leader'}
         >
           <option value={user?.group_number || ''}>{user?.group_number || 'Выберите группу'}</option>
@@ -302,56 +303,67 @@ function EventsPage() {
         </select>
       </div>
       {loading ? (
-        <p className="text-center">Загрузка...</p>
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
       ) : error ? (
-        <p className="text-center text-red-500">{error}</p>
+        <div className="text-center py-12 text-red-500 bg-red-50 rounded-lg">{error}</div>
       ) : events.length === 0 ? (
-        <p className="text-center text-gray-500">Нет актуальных событий</p>
+        <div className="text-center py-12 text-gray-400 bg-white rounded-lg shadow-sm">Нет актуальных событий</div>
       ) : (
-        <div className="space-y-4">
-          {events.map((event) => (
-            <div
-              key={event.id}
-              className={`p-4 rounded-lg shadow-md ${eventColors[event.event_type] || 'bg-gray-200'}`}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-medium">{event.title}</p>
-                  <p className="text-sm text-gray-600">
-                    {new Date(event.start_datetime).toLocaleString('ru-RU', {
-                      dateStyle: 'medium',
-                      timeStyle: 'short',
-                    })}
-                  </p>
-                  {event.description && (
-                    <p className="text-sm text-gray-600">{event.description}</p>
+        <div className="space-y-3">
+          {events.map((event) => {
+            const style = eventStyles[event.event_type] || eventStyles['Другое'];
+            return (
+              <div
+                key={event.id}
+                className={`rounded-xl shadow-sm p-4 ${style.card}`}
+              >
+                <div className="flex justify-between items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${style.badge}`}>
+                        {event.event_type}
+                      </span>
+                      <p className="font-semibold text-gray-800 text-sm">{event.title}</p>
+                    </div>
+                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                      <FiCalendar size={12} />
+                      {new Date(event.start_datetime).toLocaleString('ru-RU', {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      })}
+                    </p>
+                    {event.description && (
+                      <p className="text-sm text-gray-600 mt-1">{event.description}</p>
+                    )}
+                  </div>
+                  {(user?.role === 'admin' || user?.role === 'teacher' || (user?.role === 'group_leader' && event.group_number === user.group_number)) && isEditing && (
+                    <div className="flex gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => handleEditEvent(event)}
+                        className="p-1.5 text-blue-500 hover:bg-blue-50 rounded transition"
+                      >
+                        <FiEdit size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteEvent(event.id)}
+                        className="p-1.5 text-red-500 hover:bg-red-50 rounded transition"
+                      >
+                        <FiTrash size={14} />
+                      </button>
+                    </div>
                   )}
                 </div>
-                {(user?.role === 'admin' || user?.role === 'teacher' || (user?.role === 'group_leader' && event.group_number === user.group_number)) && isEditing && (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEditEvent(event)}
-                      className="text-blue-600"
-                    >
-                      <FiEdit size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteEvent(event.id)}
-                      className="text-red-600"
-                    >
-                      <FiTrash size={16} />
-                    </button>
-                  </div>
-                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
       {isEditing && (
         <button
           onClick={handleAddEvent}
-          className="fixed bottom-4 right-4 p-4 bg-blue-600 text-white rounded-full shadow-lg"
+          className="fixed bottom-6 right-6 p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition"
         >
           <FiPlus size={24} />
         </button>
@@ -359,36 +371,36 @@ function EventsPage() {
 
       {/* Edit Modal */}
       {editModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full mx-4 overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Редактировать событие</h3>
               <button
                 onClick={() => setEditModalOpen(false)}
-                className="text-gray-600 hover:text-gray-800"
+                className="text-slate-400 hover:text-slate-700 transition"
               >
                 <FiX size={20} />
               </button>
             </div>
             <form onSubmit={handleEditFormSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Название</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Название</label>
                 <input
                   type="text"
                   name="title"
                   value={editFormData.title}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Тип события</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Тип события</label>
                 <select
                   name="event_type"
                   value={editFormData.event_type}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 >
                   {eventTypes.map((type) => (
                     <option key={type} value={type}>{type}</option>
@@ -396,34 +408,34 @@ function EventsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Дата</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Дата</label>
                 <input
                   type="date"
                   name="date"
                   value={editFormData.date}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Время</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Время</label>
                 <input
                   type="time"
                   name="time"
                   value={editFormData.time}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Группа</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Группа</label>
                 <select
                   name="group_number"
                   value={editFormData.group_number}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 >
                   {(user?.role === 'admin' || user?.role === 'teacher') ? (
@@ -436,12 +448,12 @@ function EventsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Описание</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Описание</label>
                 <textarea
                   name="description"
                   value={editFormData.description || ''}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 />
               </div>
               {editFormError && (
@@ -451,13 +463,13 @@ function EventsPage() {
                 <button
                   type="button"
                   onClick={() => setEditModalOpen(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md"
+                  className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition font-medium text-sm"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                  className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium text-sm"
                 >
                   Сохранить
                 </button>
@@ -469,36 +481,36 @@ function EventsPage() {
 
       {/* Add Modal */}
       {addModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full mx-4 overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Добавить событие</h3>
               <button
                 onClick={() => setAddModalOpen(false)}
-                className="text-gray-600 hover:text-gray-800"
+                className="text-slate-400 hover:text-slate-700 transition"
               >
                 <FiX size={20} />
               </button>
             </div>
             <form onSubmit={handleAddFormSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Название</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Название</label>
                 <input
                   type="text"
                   name="title"
                   value={addFormData.title}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Тип события</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Тип события</label>
                 <select
                   name="event_type"
                   value={addFormData.event_type}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 >
                   {eventTypes.map((type) => (
                     <option key={type} value={type}>{type}</option>
@@ -506,34 +518,34 @@ function EventsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Дата</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Дата</label>
                 <input
                   type="date"
                   name="date"
                   value={addFormData.date}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Время</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Время</label>
                 <input
                   type="time"
                   name="time"
                   value={addFormData.time}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Группа</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Группа</label>
                 <select
                   name="group_number"
                   value={addFormData.group_number}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 >
                   {(user?.role === 'admin' || user?.role === 'teacher') ? (
@@ -546,12 +558,12 @@ function EventsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Описание</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Описание</label>
                 <textarea
                   name="description"
                   value={addFormData.description || ''}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 />
               </div>
               {addFormError && (
@@ -561,13 +573,13 @@ function EventsPage() {
                 <button
                   type="button"
                   onClick={() => setAddModalOpen(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md"
+                  className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition font-medium text-sm"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                  className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium text-sm"
                 >
                   Добавить
                 </button>
@@ -579,13 +591,13 @@ function EventsPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full mx-4 overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Подтверждение удаления</h3>
               <button
                 onClick={cancelDelete}
-                className="text-gray-600 hover:text-gray-800"
+                className="text-slate-400 hover:text-slate-700 transition"
               >
                 <FiX size={20} />
               </button>
@@ -594,13 +606,13 @@ function EventsPage() {
             <div className="flex justify-end space-x-2">
               <button
                 onClick={cancelDelete}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md"
+                className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition font-medium text-sm"
               >
                 Нет
               </button>
               <button
                 onClick={confirmDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-md"
+                className="px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition font-medium text-sm"
               >
                 Да
               </button>
@@ -611,24 +623,24 @@ function EventsPage() {
 
       {/* Reminder Settings Modal */}
       {reminderModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full mx-4 overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Настройки напоминаний</h3>
               <button
                 onClick={() => setReminderModalOpen(false)}
-                className="text-gray-600 hover:text-gray-800"
+                className="text-slate-400 hover:text-slate-700 transition"
               >
                 <FiX size={20} />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Время напоминания</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Время напоминания</label>
                 <select
                   value={reminderSetting}
                   onChange={(e) => setReminderSetting(parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 >
                   {reminderOptions.map((option) => (
                     <option key={option.value} value={option.value}>{option.label}</option>
@@ -638,13 +650,13 @@ function EventsPage() {
               <div className="flex justify-end space-x-2">
                 <button
                   onClick={() => setReminderModalOpen(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md"
+                  className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition font-medium text-sm"
                 >
                   Отмена
                 </button>
                 <button
                   onClick={handleReminderSubmit}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                  className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium text-sm"
                 >
                   Сохранить
                 </button>

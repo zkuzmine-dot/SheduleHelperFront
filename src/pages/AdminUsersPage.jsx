@@ -229,99 +229,94 @@ function AdminUsersPage() {
     setSelfDeleteModalOpen(false);
   };
 
+  const roleBadge = {
+    admin:        { text: 'Администратор', cls: 'bg-red-100 text-red-700' },
+    teacher:      { text: 'Преподаватель', cls: 'bg-blue-100 text-blue-700' },
+    group_leader: { text: 'Лидер группы', cls: 'bg-purple-100 text-purple-700' },
+    student:      { text: 'Студент', cls: 'bg-green-100 text-green-700' },
+  };
+
   return (
-    <div className="p-4 max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0">
-        <h2 className="text-xl font-bold text-blue-600">Управление пользователями</h2>
+    <div className="p-4 sm:p-6 max-w-2xl mx-auto">
+      <div className="flex justify-between items-center mb-5">
+        <h2 className="text-2xl font-bold text-gray-800">Пользователи</h2>
         {user?.role === 'admin' && (
           <button
             onClick={handleEditToggle}
-            className="p-2 bg-blue-600 text-white rounded-full"
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
+              isEditing ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
           >
-            {isEditing ? <FiX size={20} /> : <FiEdit size={20} />}
+            {isEditing ? <><FiX size={16} /> Готово</> : <><FiEdit size={16} /> Управление</>}
           </button>
         )}
       </div>
 
-      {/* Search and Filter */}
-      <div className="flex flex-col space-y-2 mb-4">
-        <div className="relative">
-          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+      <div className="flex flex-col sm:flex-row gap-2 mb-5">
+        <div className="relative flex-1">
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
           <input
             type="text"
-            placeholder="Поиск по имени пользователя..."
+            placeholder="Поиск..."
             value={searchQuery}
             onChange={handleSearchChange}
-            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md"
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
           />
         </div>
         <select
           value={selectedGroup}
           onChange={(e) => setSelectedGroup(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
         >
           {groups.map((group) => (
-            <option key={group} value={group}>
-              {group || 'Все группы'}
-            </option>
+            <option key={group} value={group}>{group || 'Все группы'}</option>
           ))}
         </select>
       </div>
 
-      {/* Users List */}
       {loading ? (
-        <p className="text-center">Загрузка...</p>
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
       ) : error ? (
-        <p className="text-center text-red-500">{error}</p>
+        <div className="text-center py-12 text-red-500 bg-red-50 rounded-lg">{error}</div>
       ) : filteredUsers.length === 0 ? (
-        <p className="text-center text-gray-500">Пользователи не найдены</p>
+        <div className="text-center py-12 text-gray-400 bg-white rounded-lg shadow-sm">Пользователи не найдены</div>
       ) : (
-        <div className="space-y-4">
-          {filteredUsers.map((user) => (
-            <div
-              key={user.id}
-              className="p-4 rounded-lg shadow-md bg-white relative"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-medium">{user.full_name || user.username}</p>
-                  <p className="text-sm text-gray-500">@{user.username}</p>
-                  <p className="text-sm text-gray-600">Роль: {user.role}</p>
-                  {user.group_number && (
-                    <p className="text-sm text-gray-600">Группа: {user.group_number}</p>
-                  )}
-                  {user.subgroup && (
-                    <p className="text-sm text-gray-600">Подгруппа: {user.subgroup}</p>
-                  )}
-                  {user.department && (
-                    <p className="text-sm text-gray-600">Кафедра: {user.department}</p>
-                  )}
-                  <p className="text-sm text-gray-600">Telegram ID: {user.telegram_id}</p>
-                  <p className="text-sm text-gray-600">Создан: {user.created_at}</p>
-                  {user.last_login && (
-                    <p className="text-sm text-gray-600">Последний вход: {user.last_login}</p>
-                  )}
+        <div className="space-y-2">
+          {filteredUsers.map((user) => {
+            const initials = (user.full_name || user.username).split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+            return (
+              <div key={user.id} className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm flex-shrink-0">
+                  {initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium text-gray-800 text-sm">{user.full_name || user.username}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleBadge[user.role]?.cls || 'bg-gray-100 text-gray-600'}`}>
+                      {roleBadge[user.role]?.text || user.role}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400">@{user.username}</p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
+                    {user.group_number && <span className="text-xs text-gray-500">{user.group_number}{user.subgroup ? ` / подгр. ${user.subgroup}` : ''}</span>}
+                    {user.department && <span className="text-xs text-gray-500">{user.department}</span>}
+                  </div>
                 </div>
                 {isEditing && (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEditUser(user)}
-                      className="text-blue-600"
-                    >
-                      <FiEdit size={16} />
+                  <div className="flex gap-1 flex-shrink-0">
+                    <button onClick={() => handleEditUser(user)} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded transition">
+                      <FiEdit size={14} />
                     </button>
-                    <button
-                      onClick={() => handleDeleteUser(user.id)}
-                      className="text-red-600"
-                    >
-                      <FiTrash size={16} />
+                    <button onClick={() => handleDeleteUser(user.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition">
+                      <FiTrash size={14} />
                     </button>
                   </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -337,58 +332,58 @@ function AdminUsersPage() {
 
       {/* Add Modal */}
       {addModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full mx-4 overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Добавить пользователя</h3>
               <button
                 onClick={() => setAddModalOpen(false)}
-                className="text-gray-600 hover:text-gray-800"
+                className="text-slate-400 hover:text-slate-700 transition"
               >
                 <FiX size={20} />
               </button>
             </div>
             <form onSubmit={handleAddFormSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Имя пользователя</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Имя пользователя</label>
                 <input
                   type="text"
                   name="username"
                   value={addFormData.username}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Пароль</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Пароль</label>
                 <input
                   type="password"
                   name="password"
                   value={addFormData.password}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Telegram ID</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Telegram ID</label>
                 <input
                   type="number"
                   name="telegram_id"
                   value={addFormData.telegram_id}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Роль</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Роль</label>
                 <select
                   name="role"
                   value={addFormData.role}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 >
                   {roles.map((role) => (
                     <option key={role} value={role}>{role}</option>
@@ -396,22 +391,22 @@ function AdminUsersPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Полное имя</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Полное имя</label>
                 <input
                   type="text"
                   name="full_name"
                   value={addFormData.full_name}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Группа</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Группа</label>
                 <select
                   name="group_number"
                   value={addFormData.group_number}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 >
                   <option value="">Нет группы</option>
                   {groups.slice(1).map((group) => (
@@ -420,24 +415,24 @@ function AdminUsersPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Подгруппа</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Подгруппа</label>
                 <input
                   type="number"
                   name="subgroup"
                   value={addFormData.subgroup}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   min="1"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Кафедра</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Кафедра</label>
                 <input
                   type="text"
                   name="department"
                   value={addFormData.department}
                   onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 />
               </div>
               {addFormError && (
@@ -447,13 +442,13 @@ function AdminUsersPage() {
                 <button
                   type="button"
                   onClick={() => setAddModalOpen(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md"
+                  className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition font-medium text-sm"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                  className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium text-sm"
                 >
                   Добавить
                 </button>
@@ -465,47 +460,47 @@ function AdminUsersPage() {
 
       {/* Edit Modal */}
       {editModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full mx-4 overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Редактировать пользователя</h3>
               <button
                 onClick={() => setEditModalOpen(false)}
-                className="text-gray-600 hover:text-gray-800"
+                className="text-slate-400 hover:text-slate-700 transition"
               >
                 <FiX size={20} />
               </button>
             </div>
             <form onSubmit={handleEditFormSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Имя пользователя</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Имя пользователя</label>
                 <input
                   type="text"
                   name="username"
                   value={editFormData.username}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Telegram ID</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Telegram ID</label>
                 <input
                   type="number"
                   name="telegram_id"
                   value={editFormData.telegram_id}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Роль</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Роль</label>
                 <select
                   name="role"
                   value={editFormData.role}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 >
                   {roles.map((role) => (
                     <option key={role} value={role}>{role}</option>
@@ -513,22 +508,22 @@ function AdminUsersPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Полное имя</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Полное имя</label>
                 <input
                   type="text"
                   name="full_name"
                   value={editFormData.full_name}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Группа</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Группа</label>
                 <select
                   name="group_number"
                   value={editFormData.group_number}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 >
                   <option value="">Нет группы</option>
                   {groups.slice(1).map((group) => (
@@ -537,24 +532,24 @@ function AdminUsersPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Подгруппа</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Подгруппа</label>
                 <input
                   type="number"
                   name="subgroup"
                   value={editFormData.subgroup}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   min="1"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Кафедра</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Кафедра</label>
                 <input
                   type="text"
                   name="department"
                   value={editFormData.department}
                   onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 />
               </div>
               {editFormError && (
@@ -564,13 +559,13 @@ function AdminUsersPage() {
                 <button
                   type="button"
                   onClick={() => setEditModalOpen(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md"
+                  className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition font-medium text-sm"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                  className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium text-sm"
                 >
                   Сохранить
                 </button>
@@ -582,13 +577,13 @@ function AdminUsersPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full mx-4 overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Подтверждение удаления</h3>
               <button
                 onClick={cancelDelete}
-                className="text-gray-600 hover:text-gray-800"
+                className="text-slate-400 hover:text-slate-700 transition"
               >
                 <FiX size={20} />
               </button>
@@ -597,13 +592,13 @@ function AdminUsersPage() {
             <div className="flex justify-end space-x-2">
               <button
                 onClick={cancelDelete}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md"
+                className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition font-medium text-sm"
               >
                 Нет
               </button>
               <button
                 onClick={confirmDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-md"
+                className="px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition font-medium text-sm"
               >
                 Да
               </button>
@@ -614,13 +609,13 @@ function AdminUsersPage() {
 
       {/* Self-Deletion Warning Modal */}
       {selfDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full mx-4 overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Ошибка</h3>
               <button
                 onClick={closeSelfDeleteModal}
-                className="text-gray-600 hover:text-gray-800"
+                className="text-slate-400 hover:text-slate-700 transition"
               >
                 <FiX size={20} />
               </button>
@@ -629,7 +624,7 @@ function AdminUsersPage() {
             <div className="flex justify-end">
               <button
                 onClick={closeSelfDeleteModal}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium text-sm"
               >
                 OK
               </button>

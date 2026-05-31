@@ -28,7 +28,7 @@ function ChatPage() {
   };
 
   return (
-    <div className="flex h-full bg-gray-100 relative lg:ml-64">
+    <div className="flex h-full bg-gray-100 relative">
       {/* Основное содержимое чатов */}
       <div className="flex-1 flex flex-col h-full">
         {selectedRoom ? (
