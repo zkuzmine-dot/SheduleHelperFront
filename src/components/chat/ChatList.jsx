@@ -48,7 +48,7 @@ const ChatList = ({ selectedRoom, onSelectRoom, loading = false }) => {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-white">
+    <div className="flex flex-col h-full overflow-hidden bg-white">
       <div className="px-4 py-3 border-b border-slate-100">
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Чаты</p>
       </div>
@@ -57,7 +57,7 @@ const ChatList = ({ selectedRoom, onSelectRoom, loading = false }) => {
           {loading ? 'Загрузка...' : 'Нет доступных чатов'}
         </div>
       ) : (
-        <ul className="p-2 space-y-0.5">
+        <ul className="p-2 space-y-0.5 overflow-y-auto flex-1">
           {chats.map((chat) => (
             <li key={chat.room_id}>
               <button
