@@ -44,7 +44,7 @@ function AppContent() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-slate-50">
       {/* Мобильная шапка */}
       {user && (
         <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-slate-900 flex items-center px-4 z-30 gap-3">
@@ -65,7 +65,7 @@ function AppContent() {
         />
       )}
 
-      <div className="flex-1 min-w-0 lg:pl-64 pt-14 lg:pt-0">
+      <div className="flex-1 min-w-0 lg:pl-64 pt-14 lg:pt-0 overflow-y-auto">
         <Routes>
           <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
           <Route path="/" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />

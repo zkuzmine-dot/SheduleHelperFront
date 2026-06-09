@@ -25,11 +25,17 @@ function ChatPage() {
   };
 
   return (
-    /*
-      На мобилке шапка App.jsx = 56px (pt-14), на десктопе pt-0.
-      Высота чат-страницы = весь viewport минус шапка.
-    */
-    <div className="flex h-[calc(100vh-56px)] lg:h-screen bg-slate-50">
+    /* h-full — работает, т.к. родитель в App.jsx теперь h-screen overflow-y-auto */
+    <div className="flex h-full overflow-hidden bg-slate-50">
+
+      {/* Кнопка открыть список чатов — встроена в мобильный топ-бар справа */}
+      <button
+        onClick={() => setMobileChatListOpen(true)}
+        className="lg:hidden fixed top-0 right-0 h-14 px-4 z-40 flex items-center justify-center text-slate-400 hover:text-white transition"
+        aria-label="Открыть список чатов"
+      >
+        <FiMessageSquare size={20} />
+      </button>
 
       {/* Область сообщений */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -38,15 +44,15 @@ function ChatPage() {
         ) : (
           <div className="flex-1 flex items-center justify-center text-slate-400">
             <div className="text-center">
-              <FiMessageSquare size={40} className="mx-auto mb-3 opacity-40" />
-              <p className="font-medium text-slate-600">Выберите чат</p>
-              <p className="text-sm mt-1">Выберите чат из списка справа</p>
+              <FiMessageSquare size={40} className="mx-auto mb-3 opacity-30" />
+              <p className="font-medium text-slate-500">Выберите чат</p>
+              <p className="text-sm mt-1 text-slate-400">Откройте список чатов справа вверху</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Список чатов — десктоп, sticky справа */}
+      {/* Список чатов — десктоп, закреплён справа */}
       <div className="hidden md:flex flex-col w-72 border-l border-slate-200 bg-white overflow-hidden flex-shrink-0">
         <ChatList
           selectedRoom={selectedRoom}
@@ -55,25 +61,14 @@ function ChatPage() {
         />
       </div>
 
-      {/* Мобилка: кнопка открыть список чатов */}
-      {!mobileChatListOpen && (
-        <button
-          onClick={() => setMobileChatListOpen(true)}
-          className="md:hidden fixed bottom-6 right-4 z-20 bg-blue-600 text-white px-4 py-2.5 rounded-xl shadow-lg hover:bg-blue-700 transition font-medium text-sm flex items-center gap-2"
-        >
-          <FiMessageSquare size={16} />
-          Чаты
-        </button>
-      )}
-
       {/* Мобилка: overlay со списком чатов */}
       {mobileChatListOpen && (
         <>
           <div
-            className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-20"
+            className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
             onClick={() => setMobileChatListOpen(false)}
           />
-          <div className="md:hidden fixed top-14 right-0 bottom-0 w-72 z-30 bg-white flex flex-col shadow-xl">
+          <div className="md:hidden fixed top-14 right-0 bottom-0 w-72 z-50 bg-white flex flex-col shadow-xl">
             <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
               <span className="font-semibold text-slate-800 text-sm">Чаты</span>
               <button

@@ -68,7 +68,7 @@ function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-full overflow-hidden">
       {/* Left panel — branding */}
       <div className="hidden lg:flex lg:w-[420px] xl:w-1/2 flex-col justify-between bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 p-12 text-white">
         <div className="flex items-center gap-3">
@@ -113,7 +113,7 @@ function LoginPage() {
       </div>
 
       {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-slate-50">
+      <div className="flex-1 flex items-center justify-center p-6 bg-slate-50 overflow-y-auto">
         <div className="w-full max-w-sm">
 
           {/* Mobile logo */}

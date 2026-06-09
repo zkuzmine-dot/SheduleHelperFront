@@ -13,9 +13,11 @@ const ChatWindow = ({ roomId, chatData }) => {
   const [wsError, setWsError] = useState(false);
   
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const wsRef = useRef(null);
   const isInitializedRef = useRef(false);
   const pollIntervalRef = useRef(null);
+  const isFirstLoadRef = useRef(true);
   
   const { user } = useAuth();
 
@@ -41,9 +43,9 @@ const ChatWindow = ({ roomId, chatData }) => {
     };
 
     loadHistory();
-    
-    // Сбрасываем флаг инициализации при смене комнаты
+
     isInitializedRef.current = false;
+    isFirstLoadRef.current = true;
 
     return () => {
       // Очищаем интервал при смене комнаты
@@ -155,8 +157,20 @@ const ChatWindow = ({ roomId, chatData }) => {
 
   // Автоскролл вниз
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (loading || messages.length === 0) return;
+
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    if (isFirstLoadRef.current) {
+      // При первой загрузке — мгновенно, без анимации
+      container.scrollTop = container.scrollHeight;
+      isFirstLoadRef.current = false;
+    } else {
+      // При новом сообщении — плавно
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, loading]);
 
   const handleSendMessage = (content) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -198,7 +212,7 @@ const ChatWindow = ({ roomId, chatData }) => {
       </div>
 
       {/* Сообщения */}
-      <div className="flex-1 overflow-y-auto p-4 bg-slate-50">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-slate-50">
         {loading ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             Загрузка сообщений...
