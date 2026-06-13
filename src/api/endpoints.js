@@ -26,6 +26,9 @@ export const authAPI = {
       current_password: currentPassword,
       new_password: newPassword,
     }),
+
+  telegramLogin: (initData) =>
+    apiClient.post('/token/telegram', { init_data: initData }),
 };
 
 // ==================== USERS ====================

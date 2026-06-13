@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { authAPI } from '../api/endpoints';
 import { FiCalendar, FiUser, FiLock, FiEye, FiEyeOff, FiAlertCircle } from 'react-icons/fi';
 
 const FACTS = [
@@ -27,11 +28,12 @@ function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [telegramId, setTelegramId] = useState(null);
+  const [telegramLoading, setTelegramLoading] = useState(false);
+  const [telegramError, setTelegramError] = useState(null);
   const [factIndex, setFactIndex] = useState(() => Math.floor(Math.random() * FACTS.length));
   const [factVisible, setFactVisible] = useState(true);
   const intervalRef = useRef(null);
-  const { login, error, clearError } = useAuth();
+  const { login, error, clearError, setUser } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,12 +47,31 @@ function LoginPage() {
     return () => clearInterval(intervalRef.current);
   }, []);
 
+  // Авто-вход через Telegram WebApp
   useEffect(() => {
-    if (window.Telegram?.WebApp) {
+    const tryTelegramLogin = async () => {
+      if (!window.Telegram?.WebApp) return;
       window.Telegram.WebApp.ready();
-      const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
-      if (tgUser && tgUser.id) setTelegramId(tgUser.id);
-    }
+      const initData = window.Telegram.WebApp.initData;
+      if (!initData) return;
+
+      setTelegramLoading(true);
+      try {
+        const tokenRes = await authAPI.telegramLogin(initData);
+        const { access_token, refresh_token } = tokenRes.data;
+        localStorage.setItem('accessToken', access_token);
+        localStorage.setItem('refreshToken', refresh_token);
+        const userRes = await authAPI.getMe();
+        setUser(userRes.data);
+        navigate('/');
+      } catch (err) {
+        const msg = err.response?.data?.detail || 'Ошибка авторизации через Telegram';
+        setTelegramError(msg);
+        setTelegramLoading(false);
+      }
+    };
+
+    tryTelegramLogin();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -58,7 +79,7 @@ function LoginPage() {
     setLoading(true);
     try {
       clearError();
-      await login(username, password, telegramId);
+      await login(username, password);
       navigate('/');
     } catch (err) {
       console.error('Login failed:', err);
@@ -66,6 +87,18 @@ function LoginPage() {
       setLoading(false);
     }
   };
+
+  // Полноэкранный спиннер пока идёт авто-вход через Telegram
+  if (telegramLoading) {
+    return (
+      <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700">
+        <div className="text-center text-white">
+          <div className="h-10 w-10 rounded-full border-4 border-white/30 border-t-white animate-spin mx-auto mb-4" />
+          <p className="font-semibold text-lg">Входим через Telegram...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -127,10 +160,10 @@ function LoginPage() {
           <h2 className="text-2xl font-bold text-slate-800 mb-1">Войти в аккаунт</h2>
           <p className="text-slate-500 text-sm mb-8">Введите ваши данные для входа</p>
 
-          {error && (
+          {(error || telegramError) && (
             <div className="mb-5 flex items-start gap-2.5 p-3.5 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
               <FiAlertCircle size={16} className="mt-0.5 flex-shrink-0" />
-              <span>{error}</span>
+              <span>{telegramError || error}</span>
             </div>
           )}
 
@@ -201,11 +234,6 @@ function LoginPage() {
             </button>
           </form>
 
-          {telegramId && (
-            <p className="text-center text-xs text-slate-400 mt-6">
-              Telegram ID: {telegramId}
-            </p>
-          )}
         </div>
       </div>
     </div>
