@@ -65,7 +65,10 @@ function LoginPage() {
         setUser(userRes.data);
         navigate('/');
       } catch (err) {
-        const msg = err.response?.data?.detail || 'Ошибка авторизации через Telegram';
+        const detail = err.response?.data?.detail;
+        const msg = detail?.includes('не зарегистрирован')
+          ? 'Аккаунт не привязан к Telegram. Войдите через логин и пароль — Telegram привяжется автоматически.'
+          : (detail || 'Ошибка авторизации через Telegram');
         setTelegramError(msg);
         setTelegramLoading(false);
       }
@@ -79,7 +82,8 @@ function LoginPage() {
     setLoading(true);
     try {
       clearError();
-      await login(username, password);
+      const tgId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id ?? null;
+      await login(username, password, tgId);
       navigate('/');
     } catch (err) {
       console.error('Login failed:', err);
