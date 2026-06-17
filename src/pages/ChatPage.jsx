@@ -26,7 +26,7 @@ function ChatPage() {
   };
 
   return (
-    /* h-full — работает, т.к. родитель в App.jsx теперь h-screen overflow-y-auto */
+    /* h-full — работает, т.к. родитель в App.jsx теперь h-dvh */
     <div className="flex h-full overflow-hidden bg-slate-50">
 
       {/* Кнопка открыть список чатов — встроена в мобильный топ-бар справа */}
