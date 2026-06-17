@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FiMoreVertical, FiEdit2, FiTrash2, FiCheck, FiX } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { abbreviateName } from '../../utils/formatName';
 
 const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
+const MENU_WIDTH = 160;
+const MENU_HEIGHT_ESTIMATE = 90;
 
 const MessageItem = ({ message, onEdit, onDelete }) => {
   const { user } = useAuth();
@@ -11,21 +14,53 @@ const MessageItem = ({ message, onEdit, onDelete }) => {
   const isSystem = message.sender_id === null;
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(message.content);
+  const buttonRef = useRef(null);
   const menuRef = useRef(null);
+
+  const closeMenu = () => {
+    setMenuOpen(false);
+    setConfirmingDelete(false);
+  };
+
+  const toggleMenu = () => {
+    if (menuOpen) {
+      closeMenu();
+      return;
+    }
+    const rect = buttonRef.current.getBoundingClientRect();
+    const openUpward = window.innerHeight - rect.bottom < MENU_HEIGHT_ESTIMATE;
+    setMenuPos({
+      top: openUpward ? rect.top - MENU_HEIGHT_ESTIMATE - 4 : rect.bottom + 4,
+      left: Math.max(8, Math.min(rect.right - MENU_WIDTH, window.innerWidth - MENU_WIDTH - 8)),
+    });
+    setMenuOpen(true);
+  };
 
   useEffect(() => {
     if (!menuOpen) return;
+
     const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpen(false);
-        setConfirmingDelete(false);
+      if (
+        menuRef.current && !menuRef.current.contains(e.target) &&
+        buttonRef.current && !buttonRef.current.contains(e.target)
+      ) {
+        closeMenu();
       }
     };
+    const handleScrollOrResize = () => closeMenu();
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+    };
   }, [menuOpen]);
 
   const formatTime = (iso) =>
@@ -46,8 +81,7 @@ const MessageItem = ({ message, onEdit, onDelete }) => {
   const startEdit = () => {
     setEditValue(message.content);
     setEditing(true);
-    setMenuOpen(false);
-    setConfirmingDelete(false);
+    closeMenu();
   };
 
   const cancelEdit = () => {
@@ -68,8 +102,7 @@ const MessageItem = ({ message, onEdit, onDelete }) => {
   const handleDeleteClick = () => {
     if (confirmingDelete) {
       onDelete?.(message.id);
-      setMenuOpen(false);
-      setConfirmingDelete(false);
+      closeMenu();
     } else {
       setConfirmingDelete(true);
     }
@@ -120,16 +153,21 @@ const MessageItem = ({ message, onEdit, onDelete }) => {
         </div>
 
         {isOwn && !editing && (
-          <div ref={menuRef} className="relative self-center">
+          <div className="self-center">
             <button
-              onClick={() => setMenuOpen((v) => !v)}
+              ref={buttonRef}
+              onClick={toggleMenu}
               className="p-1 text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded-full transition"
             >
               <FiMoreVertical size={14} />
             </button>
 
-            {menuOpen && (
-              <div className="absolute right-0 top-6 bg-white border border-slate-200 rounded-xl shadow-lg py-1 w-40 z-10 text-left">
+            {menuOpen && menuPos && createPortal(
+              <div
+                ref={menuRef}
+                style={{ position: 'fixed', top: menuPos.top, left: menuPos.left, width: MENU_WIDTH }}
+                className="bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-50 text-left"
+              >
                 {canEdit && (
                   <button
                     onClick={startEdit}
@@ -146,7 +184,8 @@ const MessageItem = ({ message, onEdit, onDelete }) => {
                 >
                   <FiTrash2 size={12} /> {confirmingDelete ? 'Подтвердить?' : 'Удалить'}
                 </button>
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         )}
