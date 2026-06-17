@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { ChatList, ChatWindow } from '../components/chat';
 import { useAuth } from '../hooks/useAuth';
-import { FiMessageSquare, FiX } from 'react-icons/fi';
+import { FiMessageSquare } from 'react-icons/fi';
 
 function ChatPage() {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [selectedChat, setSelectedChat] = useState(null);
   const [loading, setLoading] = useState(false);
   const [mobileChatListOpen, setMobileChatListOpen] = useState(false);
+  const [chatListRefreshKey, setChatListRefreshKey] = useState(0);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -40,7 +41,11 @@ function ChatPage() {
       {/* Область сообщений */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {selectedRoom ? (
-          <ChatWindow roomId={selectedRoom} chatData={selectedChat} />
+          <ChatWindow
+            roomId={selectedRoom}
+            chatData={selectedChat}
+            onMessageSent={() => setChatListRefreshKey((k) => k + 1)}
+          />
         ) : (
           <div className="flex-1 flex items-center justify-center text-slate-400">
             <div className="text-center">
@@ -58,6 +63,7 @@ function ChatPage() {
           selectedRoom={selectedRoom}
           onSelectRoom={handleSelectRoom}
           loading={loading}
+          refreshKey={chatListRefreshKey}
         />
       </div>
 
@@ -68,23 +74,14 @@ function ChatPage() {
             className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
             onClick={() => setMobileChatListOpen(false)}
           />
-          <div className="md:hidden fixed top-14 right-0 bottom-0 w-72 z-50 bg-white flex flex-col shadow-xl">
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
-              <span className="font-semibold text-slate-800 text-sm">Чаты</span>
-              <button
-                onClick={() => setMobileChatListOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition"
-              >
-                <FiX size={18} />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <ChatList
-                selectedRoom={selectedRoom}
-                onSelectRoom={handleSelectRoom}
-                loading={loading}
-              />
-            </div>
+          <div className="md:hidden fixed top-14 right-0 bottom-0 w-72 z-50 bg-white flex flex-col shadow-xl overflow-hidden">
+            <ChatList
+              selectedRoom={selectedRoom}
+              onSelectRoom={handleSelectRoom}
+              loading={loading}
+              refreshKey={chatListRefreshKey}
+              onClose={() => setMobileChatListOpen(false)}
+            />
           </div>
         </>
       )}

@@ -5,7 +5,7 @@ import OnlineUsers from './OnlineUsers';
 import { chatAPI, createWebSocketChat } from '../../api/endpoints';
 import { useAuth } from '../../hooks/useAuth';
 
-const ChatWindow = ({ roomId, chatData }) => {
+const ChatWindow = ({ roomId, chatData, onMessageSent }) => {
   const [messages, setMessages] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -175,6 +175,7 @@ const ChatWindow = ({ roomId, chatData }) => {
   const handleSendMessage = (content) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ content }));
+      onMessageSent?.();
     } else {
       setWsError(true);
     }

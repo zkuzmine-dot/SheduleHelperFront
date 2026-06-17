@@ -97,6 +97,9 @@ export const chatAPI = {
 
   getTeachers: () => apiClient.get('/teachers'),
 
+  getChatContacts: (query = '') =>
+    apiClient.get('/chat/contacts', { params: query ? { query } : {} }),
+
   getChatHistory: (roomId, limit = 50, offset = 0) =>
     apiClient.get(`/chat/history/${roomId}`, {
       params: { limit, offset },
