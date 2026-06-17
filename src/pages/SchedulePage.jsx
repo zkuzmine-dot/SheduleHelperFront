@@ -22,6 +22,11 @@ function SchedulePage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [scheduleToDelete, setScheduleToDelete] = useState(null);
+  const [deleteDayModalOpen, setDeleteDayModalOpen] = useState(false);
+  const [dayToDelete, setDayToDelete] = useState(null);
+  const [deleteDayStep, setDeleteDayStep] = useState(1);
+  const [deletingDay, setDeletingDay] = useState(false);
+  const [deleteDayError, setDeleteDayError] = useState('');
   const [editFormError, setEditFormError] = useState('');
   const [addFormError, setAddFormError] = useState('');
   const [editFormData, setEditFormData] = useState({
@@ -218,6 +223,39 @@ function SchedulePage() {
     setScheduleToDelete(null);
   };
 
+  const handleDeleteDay = (index) => {
+    const lessons = groupedSchedules[index] || [];
+    if (lessons.length === 0) return;
+    setDayToDelete({ index, day: days[index], lessons });
+    setDeleteDayStep(1);
+    setDeleteDayError('');
+    setDeleteDayModalOpen(true);
+  };
+
+  const confirmDeleteDay = async () => {
+    if (!dayToDelete) return;
+    setDeletingDay(true);
+    setDeleteDayError('');
+    try {
+      await Promise.all(dayToDelete.lessons.map((l) => schedulesAPI.delete(l.id)));
+      setDeleteDayModalOpen(false);
+      setDayToDelete(null);
+      setDeleteDayStep(1);
+      fetchSchedules();
+    } catch (err) {
+      console.error('Ошибка удаления дня:', err);
+      setDeleteDayError('Не удалось удалить все занятия дня');
+    } finally {
+      setDeletingDay(false);
+    }
+  };
+
+  const cancelDeleteDay = () => {
+    setDeleteDayModalOpen(false);
+    setDayToDelete(null);
+    setDeleteDayStep(1);
+  };
+
   const groupedSchedules = schedules.reduce((acc, schedule) => {
     if (!acc[schedule.day_of_week - 1]) {
       acc[schedule.day_of_week - 1] = [];
@@ -299,6 +337,19 @@ function SchedulePage() {
               }`}>
                 <h3 className="font-semibold text-sm uppercase tracking-wide">{day}</h3>
                 {index === currentDayIndex && <span className="text-xs bg-blue-500 px-2 py-0.5 rounded-full">Сегодня</span>}
+                {isEditing && canEdit && groupedSchedules[index]?.length > 0 && (
+                  <button
+                    onClick={() => handleDeleteDay(index)}
+                    title="Удалить все занятия этого дня"
+                    className={`ml-auto p-1.5 rounded transition ${
+                      index === currentDayIndex
+                        ? 'text-white/70 hover:text-white hover:bg-white/10'
+                        : 'text-red-400 hover:text-red-600 hover:bg-red-50'
+                    }`}
+                  >
+                    <FiTrash size={14} />
+                  </button>
+                )}
               </div>
               <div className={index === currentDayIndex ? 'bg-white' : ''}>
                 {groupedSchedules[index]?.length > 0 ? (
@@ -638,6 +689,66 @@ function SchedulePage() {
                 Удалить
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Day Confirmation Modal (двойное подтверждение) */}
+      {deleteDayModalOpen && dayToDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-sm w-full mx-4">
+            {deleteDayStep === 1 ? (
+              <>
+                <h3 className="text-lg font-semibold mb-4">Удалить день целиком?</h3>
+                <p className="text-gray-600 mb-6">
+                  Будут удалены все занятия дня{' '}
+                  <span className="font-medium text-gray-800">«{dayToDelete.day}»</span>
+                  {' '}({dayToDelete.lessons.length}{' '}
+                  {dayToDelete.lessons.length === 1 ? 'занятие' : 'занятий'}).
+                </p>
+                <div className="flex justify-end space-x-2">
+                  <button
+                    onClick={cancelDeleteDay}
+                    className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition font-medium text-sm"
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    onClick={() => setDeleteDayStep(2)}
+                    className="px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition font-medium text-sm"
+                  >
+                    Продолжить
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-semibold mb-4 text-red-600">Это действие нельзя отменить</h3>
+                <p className="text-gray-600 mb-6">
+                  Подтвердите окончательное удаление {dayToDelete.lessons.length}{' '}
+                  {dayToDelete.lessons.length === 1 ? 'занятия' : 'занятий'} из дня «{dayToDelete.day}».
+                </p>
+                {deleteDayError && (
+                  <p className="text-red-500 text-sm mb-4">{deleteDayError}</p>
+                )}
+                <div className="flex justify-end space-x-2">
+                  <button
+                    onClick={cancelDeleteDay}
+                    disabled={deletingDay}
+                    className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition font-medium text-sm disabled:opacity-50"
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    onClick={confirmDeleteDay}
+                    disabled={deletingDay}
+                    className="px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition font-medium text-sm disabled:opacity-50"
+                  >
+                    {deletingDay ? 'Удаление...' : 'Да, удалить всё'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
