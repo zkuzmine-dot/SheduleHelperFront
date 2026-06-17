@@ -131,14 +131,20 @@ const MessageItem = ({ message, onEdit, onDelete }) => {
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 rows={2}
-                className="w-full px-2 py-1.5 rounded-lg text-sm text-slate-800 bg-white/90 focus:outline-none resize-none"
+                className="w-full px-2.5 py-2 rounded-lg text-sm text-slate-800 bg-white/95 focus:outline-none resize-none"
               />
-              <div className="flex justify-end gap-1.5">
-                <button onClick={cancelEdit} className="p-1 rounded hover:bg-white/20" title="Отмена">
-                  <FiX size={14} />
+              <div className="flex gap-2">
+                <button
+                  onClick={cancelEdit}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium bg-white/15 text-white hover:bg-white/25 active:bg-white/30 transition"
+                >
+                  <FiX size={15} /> Отмена
                 </button>
-                <button onClick={saveEdit} className="p-1 rounded hover:bg-white/20" title="Сохранить">
-                  <FiCheck size={14} />
+                <button
+                  onClick={saveEdit}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold bg-white text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition"
+                >
+                  <FiCheck size={15} /> Сохранить
                 </button>
               </div>
             </div>
