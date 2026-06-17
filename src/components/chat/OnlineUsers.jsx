@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { abbreviateName } from '../../utils/formatName';
 
 const OnlineUsers = ({ users = [] }) => {
   const [expanded, setExpanded] = useState(false);
@@ -18,7 +19,7 @@ const OnlineUsers = ({ users = [] }) => {
               className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 border border-green-100 rounded-full text-xs text-green-700 font-medium flex-shrink-0"
             >
               <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              {u.full_name || u.username}
+              {u.full_name ? abbreviateName(u.full_name) : u.username}
             </div>
           ))}
         </div>
@@ -50,7 +51,7 @@ const OnlineUsers = ({ users = [] }) => {
               className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 border border-green-100 rounded-full text-xs text-green-700 font-medium"
             >
               <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              {u.full_name || u.username}
+              {u.full_name ? abbreviateName(u.full_name) : u.username}
             </div>
           ))}
         </div>

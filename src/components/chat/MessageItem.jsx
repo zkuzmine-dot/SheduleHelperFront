@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { abbreviateName } from '../../utils/formatName';
 
 const MessageItem = ({ message }) => {
   const { user } = useAuth();
@@ -30,7 +31,7 @@ const MessageItem = ({ message }) => {
       >
         {!isOwn && (
           <p className="text-xs font-semibold text-blue-600 mb-1">
-            {message.sender_full_name}
+            {abbreviateName(message.sender_full_name)}
           </p>
         )}
         <p className="break-words leading-relaxed">{message.content}</p>

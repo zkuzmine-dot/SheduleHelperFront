@@ -3,6 +3,7 @@ import { BsChat, BsPeople, BsPerson } from 'react-icons/bs';
 import { FiSearch, FiArrowLeft, FiX } from 'react-icons/fi';
 import { chatAPI } from '../../api/endpoints';
 import { useAuth } from '../../hooks/useAuth';
+import { abbreviateName } from '../../utils/formatName';
 
 const chatTypeColors = {
   group:    'bg-blue-100 text-blue-600',
@@ -78,6 +79,7 @@ const ChatList = ({ selectedRoom, onSelectRoom, loading = false, refreshKey = 0,
 
   const getChatDisplayName = (chat) => {
     if (chat.type === 'teachers') return 'Чат преподавателей';
+    if (chat.type === 'private') return abbreviateName(chat.name);
     return chat.name;
   };
 
@@ -146,7 +148,7 @@ const ChatList = ({ selectedRoom, onSelectRoom, loading = false, refreshKey = 0,
                   {contact.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm text-slate-700 truncate">{contact.name}</p>
+                  <p className="font-medium text-sm text-slate-700 truncate">{abbreviateName(contact.name)}</p>
                   {contact.subtitle && (
                     <p className="text-xs text-slate-400 truncate">{contact.subtitle}</p>
                   )}

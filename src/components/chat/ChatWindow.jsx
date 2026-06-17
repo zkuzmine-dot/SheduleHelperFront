@@ -4,6 +4,7 @@ import ChatInput from './ChatInput';
 import OnlineUsers from './OnlineUsers';
 import { chatAPI, createWebSocketChat } from '../../api/endpoints';
 import { useAuth } from '../../hooks/useAuth';
+import { abbreviateName } from '../../utils/formatName';
 
 const ChatWindow = ({ roomId, chatData, onMessageSent }) => {
   const [messages, setMessages] = useState([]);
@@ -148,11 +149,13 @@ const ChatWindow = ({ roomId, chatData, onMessageSent }) => {
       {/* Заголовок */}
       <div className="flex-shrink-0 bg-white border-b border-slate-100 px-5 py-3.5 flex items-center justify-between">
         <h2 className="font-semibold text-slate-800 text-sm">
-          {chatData?.name || roomId
-            .replace('group:', '')
-            .replace('private:', '')
-            .replace(/_/g, ' — ')
-            .replace('teachers', 'Чат преподавателей')}
+          {chatData?.name
+            ? (chatData.type === 'private' ? abbreviateName(chatData.name) : chatData.name)
+            : roomId
+                .replace('group:', '')
+                .replace('private:', '')
+                .replace(/_/g, ' — ')
+                .replace('teachers', 'Чат преподавателей')}
         </h2>
         {wsError && (
           <span className="text-xs text-red-500 bg-red-50 px-2.5 py-1 rounded-lg">
