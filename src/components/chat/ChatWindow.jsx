@@ -16,9 +16,8 @@ const ChatWindow = ({ roomId, chatData, onMessageSent }) => {
   const messagesContainerRef = useRef(null);
   const wsRef = useRef(null);
   const isInitializedRef = useRef(false);
-  const pollIntervalRef = useRef(null);
   const isFirstLoadRef = useRef(true);
-  
+
   const { user } = useAuth();
 
   // Загрузка истории сообщений
@@ -31,9 +30,6 @@ const ChatWindow = ({ roomId, chatData, onMessageSent }) => {
         setError(null);
         const response = await chatAPI.getChatHistory(roomId, 50, 0);
         setMessages(response.data.messages);
-
-        // Загружаем список онлайн-пользователей
-        await fetchOnlineUsers(roomId);
       } catch (err) {
         console.error('Failed to load chat history:', err);
         setError('Не удалось загрузить историю чата');
@@ -43,28 +39,11 @@ const ChatWindow = ({ roomId, chatData, onMessageSent }) => {
     };
 
     loadHistory();
+    setOnlineUsers([]);
 
     isInitializedRef.current = false;
     isFirstLoadRef.current = true;
-
-    return () => {
-      // Очищаем интервал при смене комнаты
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
-      }
-    };
   }, [roomId]);
-
-  // Функция для загрузки онлайн-пользователей
-  const fetchOnlineUsers = async (room) => {
-    try {
-      const onlineResponse = await chatAPI.getOnlineUsers(room);
-      setOnlineUsers(onlineResponse.data.users);
-    } catch (err) {
-      console.error('Failed to load online users:', err);
-    }
-  };
 
   // WebSocket подключение (безопасное для StrictMode)
   useEffect(() => {
@@ -95,11 +74,11 @@ const ChatWindow = ({ roomId, chatData, onMessageSent }) => {
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
-        // Получаем только сообщения типа 'message'
         if (data.type === 'message') {
           setMessages((prev) => [...prev, data]);
+        } else if (data.type === 'online_users') {
+          setOnlineUsers(data.users);
         }
-        // Игнорируем 'user_joined', 'user_left' - используем только GET /chat/online/{room_id}
       };
 
       ws.onerror = (event) => {
@@ -119,41 +98,16 @@ const ChatWindow = ({ roomId, chatData, onMessageSent }) => {
       isInitializedRef.current = false;
     }
 
-    // Cleanup: закрываем WebSocket и очищаем интервал полинга
+    // Cleanup: закрываем WebSocket
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
       }
 
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
-      }
-
       isInitializedRef.current = false;
     };
   }, [roomId, user]);
-
-  // Периодическое обновление онлайн-пользователей (каждые 5 секунд)
-  useEffect(() => {
-    if (!roomId) return;
-
-    // Первый запрос сразу
-    fetchOnlineUsers(roomId);
-
-    // Затем каждые 5 секунд
-    pollIntervalRef.current = setInterval(() => {
-      fetchOnlineUsers(roomId);
-    }, 5000);
-
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
-      }
-    };
-  }, [roomId]);
 
   // Автоскролл вниз
   useEffect(() => {
