@@ -41,13 +41,17 @@ apiClient.interceptors.request.use(
 );
 
 // Interceptor для обработки ошибок и автоматического refresh
+// Эндпоинты авторизации — 401 здесь означает "неверные данные", а не "сессия истекла"
+const AUTH_ENDPOINTS = ['/token', '/token/telegram', '/refresh'];
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const isAuthEndpoint = AUTH_ENDPOINTS.some((path) => originalRequest?.url?.includes(path));
 
-    // Если 401 и еще не пытались refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Если 401 и еще не пытались refresh (и это не сам запрос логина/рефреша)
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
         // Ждем, пока текущий refresh завершится
         return new Promise((resolve, reject) => {

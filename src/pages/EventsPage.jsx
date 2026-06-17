@@ -51,7 +51,7 @@ function EventsPage() {
     { value: 60, label: '1 час' },
     { value: 1440, label: '1 день' },
   ];
-  const groups = ['ИБ-11БО', 'ИБ-21БО', 'ИБ-31БО', 'ИБ-41БО', 'КБ-11СО', 'КБ-21СО', 'КБ-31СО', 'КБ-41СО', 'КБ-51СО', 'МКН-11БО', 'MKH-21БО', 'MKH-31БО', 'MKH-41БО', 'ПМИ-11БО', 'ПМИ-12БО', 'ПМИ-13БО', 'ПМИ-21БО', 'ПМИ-22БО', 'ПМИ-23БО', 'ПМИ-31БО', 'ПМИ-32БО', 'ПМИ-33БО', 'ПМИ-41БО', 'ПМИ-42БО', 'ПМИ-43БО', 'ПМИ-11МО', 'МКН-11МО', 'ИБМ-11МО'];
+  const groups = ['ИБ-11БО', 'ИБ-21БО', 'ИБ-31БО', 'ИБ-41БО', 'КБ-11СО', 'КБ-21СО', 'КБ-31СО', 'КБ-41СО', 'КБ-51СО', 'МКН-11БО', 'МКН-21БО', 'МКН-31БО', 'МКН-41БО', 'ПМИ-11БО', 'ПМИ-12БО', 'ПМИ-13БО', 'ПМИ-21БО', 'ПМИ-22БО', 'ПМИ-23БО', 'ПМИ-31БО', 'ПМИ-32БО', 'ПМИ-33БО', 'ПМИ-41БО', 'ПМИ-42БО', 'ПМИ-43БО', 'ПМИ-11МО', 'МКН-11МО', 'ИБМ-11МО'];
 
   const showNotification = (message) => {
     setNotification(message);
@@ -155,7 +155,7 @@ function EventsPage() {
         title: editFormData.title,
         event_type: editFormData.event_type,
         start_datetime,
-        group_number: selectedEvent.group_number,
+        group_number: editFormData.group_number,
         description: editFormData.description,
       });
       setEditModalOpen(false);
@@ -181,7 +181,7 @@ function EventsPage() {
         title: addFormData.title,
         event_type: addFormData.event_type,
         start_datetime,
-        group_number: group,
+        group_number: addFormData.group_number,
         description: addFormData.description,
       });
       setAddModalOpen(false);
