@@ -23,6 +23,8 @@ const ChatList = ({ selectedRoom, onSelectRoom, loading = false, refreshKey = 0,
   const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) return;
+
     const fetchChats = async () => {
       try {
         setError(null);
@@ -33,7 +35,12 @@ const ChatList = ({ selectedRoom, onSelectRoom, loading = false, refreshKey = 0,
         setError('Не удалось загрузить список чатов');
       }
     };
-    if (user) fetchChats();
+
+    fetchChats();
+
+    // Поллинг — чтобы видеть новые входящие чаты без открытия конкретной комнаты
+    const interval = setInterval(fetchChats, 12000);
+    return () => clearInterval(interval);
   }, [user, refreshKey]);
 
   const openSearch = async () => {
