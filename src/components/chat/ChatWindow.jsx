@@ -79,6 +79,14 @@ const ChatWindow = ({ roomId, chatData, onMessageSent }) => {
           setMessages((prev) => [...prev, data]);
         } else if (data.type === 'online_users') {
           setOnlineUsers(data.users);
+        } else if (data.type === 'message_edited') {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === data.id ? { ...m, content: data.content, edited_at: data.edited_at } : m
+            )
+          );
+        } else if (data.type === 'message_deleted') {
+          setMessages((prev) => prev.filter((m) => m.id !== data.id));
         }
       };
 
@@ -129,10 +137,22 @@ const ChatWindow = ({ roomId, chatData, onMessageSent }) => {
 
   const handleSendMessage = (content) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ content }));
+      wsRef.current.send(JSON.stringify({ action: 'send', content }));
       onMessageSent?.();
     } else {
       setWsError(true);
+    }
+  };
+
+  const handleEditMessage = (messageId, content) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ action: 'edit', message_id: messageId, content }));
+    }
+  };
+
+  const handleDeleteMessage = (messageId) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ action: 'delete', message_id: messageId }));
     }
   };
 
@@ -189,7 +209,12 @@ const ChatWindow = ({ roomId, chatData, onMessageSent }) => {
         ) : (
           <>
             {messages.map((msg) => (
-              <MessageItem key={msg.id} message={msg} />
+              <MessageItem
+                key={msg.id}
+                message={msg}
+                onEdit={handleEditMessage}
+                onDelete={handleDeleteMessage}
+              />
             ))}
             <div ref={messagesEndRef} />
           </>

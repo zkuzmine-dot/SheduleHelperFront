@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 const roleLabels = {
   admin:        'Администратор',
   teacher:      'Преподаватель',
-  group_leader: 'Лидер группы',
+  group_leader: 'Староста',
   student:      'Студент',
 };
 

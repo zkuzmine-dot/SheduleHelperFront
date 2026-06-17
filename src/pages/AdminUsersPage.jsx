@@ -232,7 +232,7 @@ function AdminUsersPage() {
   const roleBadge = {
     admin:        { text: 'Администратор', cls: 'bg-red-100 text-red-700' },
     teacher:      { text: 'Преподаватель', cls: 'bg-blue-100 text-blue-700' },
-    group_leader: { text: 'Лидер группы', cls: 'bg-purple-100 text-purple-700' },
+    group_leader: { text: 'Староста', cls: 'bg-purple-100 text-purple-700' },
     student:      { text: 'Студент', cls: 'bg-green-100 text-green-700' },
   };
 
