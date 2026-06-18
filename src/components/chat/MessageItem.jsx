@@ -25,6 +25,14 @@ function parseEventNotification(content) {
   return { eventType, title, dateStr, description };
 }
 
+// "25.06.2026 в 14:30" -> Date
+function parseEventDate(dateStr) {
+  const match = dateStr?.match(/^(\d{2})\.(\d{2})\.(\d{4}) в (\d{2}):(\d{2})$/);
+  if (!match) return null;
+  const [, day, month, year, hour, minute] = match;
+  return new Date(`${year}-${month}-${day}T${hour}:${minute}:00`);
+}
+
 const MessageItem = ({ message, onEdit, onDelete }) => {
   const { user } = useAuth();
   const isOwn = message.sender_id === user?.id;
@@ -87,6 +95,11 @@ const MessageItem = ({ message, onEdit, onDelete }) => {
     const eventInfo = parseEventNotification(message.content);
 
     if (eventInfo) {
+      const eventDate = parseEventDate(eventInfo.dateStr);
+      if (eventDate && eventDate.getTime() < Date.now()) {
+        return null; // событие уже прошло — не показываем
+      }
+
       const theme = EVENT_TYPE_THEME[eventInfo.eventType] || EVENT_TYPE_THEME['Другое'];
       const Icon = theme.icon;
       return (
