@@ -1,12 +1,29 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { FiMoreVertical, FiEdit2, FiTrash2, FiCheck, FiX } from 'react-icons/fi';
+import { FiMoreVertical, FiEdit2, FiTrash2, FiCheck, FiX, FiEdit3, FiClipboard, FiAward, FiInfo } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { abbreviateName } from '../../utils/formatName';
 
 const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 const MENU_WIDTH = 160;
 const MENU_HEIGHT_ESTIMATE = 90;
+
+const EVENT_TYPE_THEME = {
+  'Тест':        { badge: 'bg-amber-100 text-amber-700', bar: 'bg-amber-400', icon: FiEdit3 },
+  'Контрольная': { badge: 'bg-orange-100 text-orange-700', bar: 'bg-orange-400', icon: FiClipboard },
+  'Экзамен':     { badge: 'bg-red-100 text-red-700', bar: 'bg-red-400', icon: FiAward },
+  'Другое':      { badge: 'bg-slate-100 text-slate-600', bar: 'bg-slate-400', icon: FiInfo },
+};
+
+// Парсит формат сообщений из notify_group_chat_about_event (backend/main.py)
+const EVENT_MSG_REGEX = /^.+? Новое событие: (Тест|Контрольная|Экзамен|Другое)\n«([\s\S]+?)»\n🗓 ([^\n]+)(?:\n\n([\s\S]+))?$/;
+
+function parseEventNotification(content) {
+  const match = content?.match(EVENT_MSG_REGEX);
+  if (!match) return null;
+  const [, eventType, title, dateStr, description] = match;
+  return { eventType, title, dateStr, description };
+}
 
 const MessageItem = ({ message, onEdit, onDelete }) => {
   const { user } = useAuth();
@@ -67,6 +84,35 @@ const MessageItem = ({ message, onEdit, onDelete }) => {
     new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
   if (isSystem) {
+    const eventInfo = parseEventNotification(message.content);
+
+    if (eventInfo) {
+      const theme = EVENT_TYPE_THEME[eventInfo.eventType] || EVENT_TYPE_THEME['Другое'];
+      const Icon = theme.icon;
+      return (
+        <div className="flex justify-center my-3 px-2">
+          <div className="relative max-w-sm w-full overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-100">
+            <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${theme.bar}`} />
+            <div className="pl-4 pr-3.5 py-3 flex gap-2.5">
+              <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${theme.badge}`}>
+                <Icon size={15} />
+              </div>
+              <div className="min-w-0">
+                <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full mb-1 ${theme.badge}`}>
+                  {eventInfo.eventType}
+                </span>
+                <p className="font-medium text-slate-800 text-sm leading-snug">{eventInfo.title}</p>
+                <p className="text-xs text-slate-500 mt-1">📅 {eventInfo.dateStr}</p>
+                {eventInfo.description && (
+                  <p className="text-xs text-slate-600 mt-1">{eventInfo.description}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex justify-center my-3">
         <span className="bg-slate-100 text-slate-500 text-xs px-3 py-1 rounded-full">
