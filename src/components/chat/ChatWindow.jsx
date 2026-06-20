@@ -18,6 +18,7 @@ const ChatWindow = ({ roomId, chatData, onMessageSent }) => {
   const wsRef = useRef(null);
   const isInitializedRef = useRef(false);
   const isFirstLoadRef = useRef(true);
+  const prevMessagesLengthRef = useRef(0);
 
   const { user } = useAuth();
 
@@ -129,10 +130,12 @@ const ChatWindow = ({ roomId, chatData, onMessageSent }) => {
       // При первой загрузке — мгновенно, без анимации
       container.scrollTop = container.scrollHeight;
       isFirstLoadRef.current = false;
-    } else {
-      // При новом сообщении — плавно
+    } else if (messages.length > prevMessagesLengthRef.current) {
+      // Скроллим только если пришло новое сообщение, а не при правке/удалении
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
+
+    prevMessagesLengthRef.current = messages.length;
   }, [messages, loading]);
 
   const handleSendMessage = (content) => {
