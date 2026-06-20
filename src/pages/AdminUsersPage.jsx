@@ -99,7 +99,7 @@ function AdminUsersPage() {
     setSelectedUser(user);
     setEditFormData({
       username: user.username,
-      telegram_id: user.telegram_id.toString(),
+      telegram_id: user.telegram_id != null ? user.telegram_id.toString() : '',
       role: user.role,
       full_name: user.full_name || '',
       group_number: user.group_number || '',

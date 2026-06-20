@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
-import { eventsAPI } from '../api/endpoints';
+import { eventsAPI, usersAPI } from '../api/endpoints';
 import { useAuth } from '../hooks/useAuth';
 import { FiEdit, FiPlus, FiTrash, FiX, FiCalendar, FiSettings } from 'react-icons/fi';
-import axios from 'axios';
 function EventsPage() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const [events, setEvents] = useState([]);
-  const [group, setGroup] = useState(user?.group_number || 'ИВТ-21-1');
+  const [group, setGroup] = useState(user?.group_number || 'ИБ-11БО');
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -219,47 +218,31 @@ function EventsPage() {
     setEventToDelete(null);
   };
 
-  const handleReminderSubmit = async () => {
-  try {
-    const accessToken = localStorage.getItem('accessToken');   // ← важно: access_token
-
-    if (!accessToken) {
-      setError('Сессия истекла. Пожалуйста, войдите заново.');
-      return;
+  const handleOpenReminderModal = () => {
+    let currentValue = -1;
+    try {
+      const settings = user?.notification_settings ? JSON.parse(user.notification_settings) : null;
+      if (settings?.event_reminder !== undefined) currentValue = settings.event_reminder;
+    } catch (err) {
+      console.error('Не удалось разобрать notification_settings:', err);
     }
+    setReminderSetting(currentValue);
+    setReminderModalOpen(true);
+  };
 
-    await axios.put(
-      'https://timeofthestars.online/users/me/notification-settings',
-      {
-        notification_settings: JSON.stringify({ 
-          event_reminder: Number(reminderSetting) 
-        })
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    setReminderModalOpen(false);
-    showNotification('Настройки напоминаний успешно обновлены');
-    
-  } catch (err) {
-    console.error('Полная ошибка:', err);
-
-    if (err.response?.status === 401) {
-      setError('Сессия истекла. Пожалуйста, войдите заново.');
-      // Можно автоматически вызвать logout
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-    } else {
+  const handleReminderSubmit = async () => {
+    try {
+      const notification_settings = JSON.stringify({ event_reminder: Number(reminderSetting) });
+      await usersAPI.updateNotificationSettings({ event_reminder: Number(reminderSetting) });
+      setUser((prev) => (prev ? { ...prev, notification_settings } : prev));
+      setReminderModalOpen(false);
+      showNotification('Настройки напоминаний успешно обновлены');
+    } catch (err) {
+      console.error('Ошибка обновления настроек напоминаний:', err);
       const errorMsg = err.response?.data?.detail || err.message || 'Неизвестная ошибка';
       setError(`Не удалось обновить настройки: ${errorMsg}`);
     }
-  }
-};
+  };
 
   return (
     <div className="p-4 sm:p-6 max-w-xl mx-auto relative">
@@ -273,7 +256,7 @@ function EventsPage() {
         <h2 className="text-2xl font-bold text-gray-800">События</h2>
         <div className="flex gap-1">
           <button
-            onClick={() => setReminderModalOpen(true)}
+            onClick={handleOpenReminderModal}
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition"
             title="Настройки напоминаний"
           >
