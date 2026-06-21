@@ -269,7 +269,7 @@ function SchedulePage() {
     return acc;
   }, Array(7).fill(null));
 
-  const canEdit = user?.role === 'admin' || user?.role === 'teacher' || (user?.role === 'group_leader' && user?.group_number === group);
+  const canEdit = user?.role === 'admin' || user?.role === 'teacher';
 
   const weekTypeLabel = {
     denominator: { text: 'Знам.', cls: 'bg-purple-100 text-purple-700' },
