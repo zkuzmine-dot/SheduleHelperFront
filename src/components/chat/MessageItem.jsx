@@ -88,8 +88,27 @@ const MessageItem = ({ message, onEdit, onDelete }) => {
     };
   }, [menuOpen]);
 
-  const formatTime = (iso) =>
-    new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  const formatTime = (iso) => {
+    const date = new Date(iso);
+    const now = new Date();
+    const time = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+    const isToday =
+      date.getDate() === now.getDate() &&
+      date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear();
+
+    if (isToday) return time;
+
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+
+    if (date.getFullYear() !== now.getFullYear()) {
+      return `${day}.${month}.${date.getFullYear()} ${time}`;
+    }
+
+    return `${day}.${month} ${time}`;
+  };
 
   if (isSystem) {
     const eventInfo = parseEventNotification(message.content);
