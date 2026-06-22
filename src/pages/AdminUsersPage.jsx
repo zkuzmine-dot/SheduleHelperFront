@@ -130,10 +130,14 @@ function AdminUsersPage() {
     setEditFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Postgres Integer (тип колонки telegram_id на бэке) ограничен диапазоном int32
+  const TELEGRAM_ID_MAX = 2147483647;
+
   const validateAddForm = () => {
     if (!addFormData.username.trim()) return 'Имя пользователя обязательно';
     if (!addFormData.password.trim()) return 'Пароль обязателен';
     if (!addFormData.telegram_id || isNaN(parseInt(addFormData.telegram_id))) return 'Telegram ID должен быть числом';
+    if (parseInt(addFormData.telegram_id) < 1 || parseInt(addFormData.telegram_id) > TELEGRAM_ID_MAX) return `Telegram ID должен быть от 1 до ${TELEGRAM_ID_MAX}`;
     if (!roles.includes(addFormData.role)) return 'Неверная роль';
     if (addFormData.subgroup && (isNaN(parseInt(addFormData.subgroup)) || parseInt(addFormData.subgroup) < 1)) return 'Подгруппа должна быть положительным числом';
     return '';
@@ -142,6 +146,7 @@ function AdminUsersPage() {
   const validateEditForm = () => {
     if (!editFormData.username.trim()) return 'Имя пользователя обязательно';
     if (!editFormData.telegram_id || isNaN(parseInt(editFormData.telegram_id))) return 'Telegram ID должен быть числом';
+    if (parseInt(editFormData.telegram_id) < 1 || parseInt(editFormData.telegram_id) > TELEGRAM_ID_MAX) return `Telegram ID должен быть от 1 до ${TELEGRAM_ID_MAX}`;
     if (!roles.includes(editFormData.role)) return 'Неверная роль';
     if (editFormData.subgroup && (isNaN(parseInt(editFormData.subgroup)) || parseInt(editFormData.subgroup) < 1)) return 'Подгруппа должна быть положительным числом';
     return '';
@@ -373,6 +378,8 @@ function AdminUsersPage() {
                   name="telegram_id"
                   value={addFormData.telegram_id}
                   onChange={handleAddFormChange}
+                  min="1"
+                  max={TELEGRAM_ID_MAX}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
@@ -490,6 +497,8 @@ function AdminUsersPage() {
                   name="telegram_id"
                   value={editFormData.telegram_id}
                   onChange={handleEditFormChange}
+                  min="1"
+                  max={TELEGRAM_ID_MAX}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   required
                 />
