@@ -127,13 +127,18 @@ function EventsPage() {
     setAddFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const isPastDateTime = (dateStr, timeStr) => {
+    if (!dateStr || !timeStr) return false;
+    return new Date(`${dateStr}T${timeStr}`).getTime() <= Date.now();
+  };
+
   const validateEditForm = () => {
     if (!editFormData.title.trim()) return 'Название события обязательно';
     if (editFormData.title.trim().length > 200) return 'Название не может быть длиннее 200 символов';
     if ((editFormData.description || '').length > 1000) return 'Описание не может быть длиннее 1000 символов';
     if (!editFormData.date) return 'Дата обязательна';
     if (!editFormData.time) return 'Время обязательно';
-    if (editFormData.date < todayStr) return 'Дата события не может быть в прошлом';
+    if (isPastDateTime(editFormData.date, editFormData.time)) return 'Дата и время события не могут быть в прошлом';
     return '';
   };
 
@@ -143,7 +148,7 @@ function EventsPage() {
     if ((addFormData.description || '').length > 1000) return 'Описание не может быть длиннее 1000 символов';
     if (!addFormData.date) return 'Дата обязательна';
     if (!addFormData.time) return 'Время обязательно';
-    if (addFormData.date < todayStr) return 'Дата события не может быть в прошлом';
+    if (isPastDateTime(addFormData.date, addFormData.time)) return 'Дата и время события не могут быть в прошлом';
     return '';
   };
 
