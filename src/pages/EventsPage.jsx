@@ -291,10 +291,13 @@ function EventsPage() {
           className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
           disabled={user?.role === 'student' || user?.role === 'group_leader'}
         >
-          <option value={user?.group_number || ''}>{user?.group_number || 'Выберите группу'}</option>
-          {(user?.role === 'admin' || user?.role === 'teacher') && groups.map((g) => (
-            <option key={g} value={g}>{g}</option>
-          ))}
+          {(user?.role === 'admin' || user?.role === 'teacher') ? (
+            groups.map((g) => (
+              <option key={g} value={g}>{g}</option>
+            ))
+          ) : (
+            <option value={user?.group_number || ''}>{user?.group_number || 'Выберите группу'}</option>
+          )}
         </select>
       </div>
       {loading ? (
