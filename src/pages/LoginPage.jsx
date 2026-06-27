@@ -187,6 +187,7 @@ function LoginPage() {
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   placeholder="Введите имя пользователя"
+                  maxLength={100}
                   required
                   disabled={loading}
                   autoComplete="username"
@@ -209,6 +210,7 @@ function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-11 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   placeholder="Введите пароль"
+                  maxLength={255}
                   required
                   disabled={loading}
                   autoComplete="current-password"

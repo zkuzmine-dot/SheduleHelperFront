@@ -113,23 +113,37 @@ function SchedulePage() {
 
   const validateEditForm = () => {
     if (!editFormData.subject.trim()) return 'Название предмета обязательно';
+    if (editFormData.subject.trim().length > 255) return 'Название предмета не может быть длиннее 255 символов';
+    if (editFormData.classroom.length > 50) return 'Аудитория не может быть длиннее 50 символов';
+    if (editFormData.teacher_name.length > 100) return 'Имя преподавателя не может быть длиннее 100 символов';
     if (!editFormData.start_time) return 'Время начала обязательно';
     if (!editFormData.end_time) return 'Время окончания обязательно';
     const startTime = new Date(`1970-01-01T${editFormData.start_time}`);
     const endTime = new Date(`1970-01-01T${editFormData.end_time}`);
     if (startTime >= endTime) return 'Время окончания должно быть позже времени начала';
-    if (editFormData.subgroup && isNaN(parseInt(editFormData.subgroup))) return 'Подгруппа должна быть числом';
+    if (editFormData.subgroup) {
+      const sub = parseInt(editFormData.subgroup);
+      if (isNaN(sub)) return 'Подгруппа должна быть числом';
+      if (sub < 1 || sub > 20) return 'Подгруппа должна быть от 1 до 20';
+    }
     return '';
   };
 
   const validateAddForm = () => {
     if (!addFormData.subject.trim()) return 'Название предмета обязательно';
+    if (addFormData.subject.trim().length > 255) return 'Название предмета не может быть длиннее 255 символов';
+    if (addFormData.classroom.length > 50) return 'Аудитория не может быть длиннее 50 символов';
+    if (addFormData.teacher_name.length > 100) return 'Имя преподавателя не может быть длиннее 100 символов';
     if (!addFormData.start_time) return 'Время начала обязательно';
     if (!addFormData.end_time) return 'Время окончания обязательно';
     const startTime = new Date(`1970-01-01T${addFormData.start_time}`);
     const endTime = new Date(`1970-01-01T${addFormData.end_time}`);
     if (startTime >= endTime) return 'Время окончания должно быть позже времени начала';
-    if (addFormData.subgroup && isNaN(parseInt(addFormData.subgroup))) return 'Подгруппа должна быть числом';
+    if (addFormData.subgroup) {
+      const sub = parseInt(addFormData.subgroup);
+      if (isNaN(sub)) return 'Подгруппа должна быть числом';
+      if (sub < 1 || sub > 20) return 'Подгруппа должна быть от 1 до 20';
+    }
     if (isNaN(parseInt(addFormData.day_of_week)) || parseInt(addFormData.day_of_week) < 1 || parseInt(addFormData.day_of_week) > 7)
       return 'День недели должен быть от 1 до 7';
     return '';
@@ -443,6 +457,7 @@ function SchedulePage() {
                   value={editFormData.subject}
                   onChange={handleEditFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  maxLength={255}
                   required
                 />
               </div>
@@ -476,6 +491,7 @@ function SchedulePage() {
                   value={editFormData.classroom}
                   onChange={handleEditFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  maxLength={50}
                 />
               </div>
               <div>
@@ -486,6 +502,7 @@ function SchedulePage() {
                   value={editFormData.teacher_name}
                   onChange={handleEditFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  maxLength={100}
                 />
               </div>
               <div>
@@ -497,6 +514,7 @@ function SchedulePage() {
                   onChange={handleEditFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   min="1"
+                  max="20"
                 />
               </div>
               <div>
@@ -559,6 +577,7 @@ function SchedulePage() {
                   value={addFormData.subject}
                   onChange={handleAddFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  maxLength={255}
                   required
                 />
               </div>
@@ -592,6 +611,7 @@ function SchedulePage() {
                   value={addFormData.classroom}
                   onChange={handleAddFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  maxLength={50}
                 />
               </div>
               <div>
@@ -602,6 +622,7 @@ function SchedulePage() {
                   value={addFormData.teacher_name}
                   onChange={handleAddFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  maxLength={100}
                 />
               </div>
               <div>
@@ -613,6 +634,7 @@ function SchedulePage() {
                   onChange={handleAddFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   min="1"
+                  max="20"
                 />
               </div>
               <div>

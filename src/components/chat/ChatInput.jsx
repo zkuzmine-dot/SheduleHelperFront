@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { IoSend } from 'react-icons/io5';
 
+const MAX_MESSAGE_LENGTH = 2000;
+
 const ChatInput = ({ onSendMessage, disabled = false }) => {
   const [message, setMessage] = useState('');
   const textareaRef = useRef(null);
@@ -32,16 +34,26 @@ const ChatInput = ({ onSendMessage, disabled = false }) => {
   return (
     <form onSubmit={handleSubmit} className="border-t border-slate-100 bg-white p-3">
       <div className="flex gap-2 items-end">
-        <textarea
-          ref={textareaRef}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={disabled ? 'Нет соединения...' : 'Напишите сообщение...'}
-          disabled={disabled}
-          className="flex-1 px-4 py-2.5 border border-slate-200 rounded-2xl resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition disabled:bg-slate-50 disabled:text-slate-400 max-h-32 bg-white"
-          rows="1"
-        />
+        <div className="flex-1 relative">
+          <textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
+            onKeyDown={handleKeyDown}
+            placeholder={disabled ? 'Нет соединения...' : 'Напишите сообщение...'}
+            disabled={disabled}
+            maxLength={MAX_MESSAGE_LENGTH}
+            className="w-full px-4 py-2.5 border border-slate-200 rounded-2xl resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition disabled:bg-slate-50 disabled:text-slate-400 max-h-32 bg-white"
+            rows="1"
+          />
+          {message.length > MAX_MESSAGE_LENGTH - 200 && (
+            <span className={`absolute -bottom-4 right-1 text-[11px] ${
+              message.length >= MAX_MESSAGE_LENGTH ? 'text-red-500' : 'text-slate-400'
+            }`}>
+              {message.length}/{MAX_MESSAGE_LENGTH}
+            </span>
+          )}
+        </div>
         <button
           type="submit"
           disabled={disabled || !message.trim()}

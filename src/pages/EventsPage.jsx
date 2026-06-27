@@ -51,6 +51,7 @@ function EventsPage() {
     { value: 1440, label: '1 день' },
   ];
   const groups = ['ИБ-11БО', 'ИБ-21БО', 'ИБ-31БО', 'ИБ-41БО', 'КБ-11СО', 'КБ-21СО', 'КБ-31СО', 'КБ-41СО', 'КБ-51СО', 'МКН-11БО', 'МКН-21БО', 'МКН-31БО', 'МКН-41БО', 'ПМИ-11БО', 'ПМИ-12БО', 'ПМИ-13БО', 'ПМИ-21БО', 'ПМИ-22БО', 'ПМИ-23БО', 'ПМИ-31БО', 'ПМИ-32БО', 'ПМИ-33БО', 'ПМИ-41БО', 'ПМИ-42БО', 'ПМИ-43БО', 'ПМИ-11МО', 'МКН-11МО', 'ИБМ-11МО'];
+  const todayStr = new Date().toISOString().split('T')[0];
 
   const showNotification = (message) => {
     setNotification(message);
@@ -128,15 +129,21 @@ function EventsPage() {
 
   const validateEditForm = () => {
     if (!editFormData.title.trim()) return 'Название события обязательно';
+    if (editFormData.title.trim().length > 200) return 'Название не может быть длиннее 200 символов';
+    if ((editFormData.description || '').length > 1000) return 'Описание не может быть длиннее 1000 символов';
     if (!editFormData.date) return 'Дата обязательна';
     if (!editFormData.time) return 'Время обязательно';
+    if (editFormData.date < todayStr) return 'Дата события не может быть в прошлом';
     return '';
   };
 
   const validateAddForm = () => {
     if (!addFormData.title.trim()) return 'Название события обязательно';
+    if (addFormData.title.trim().length > 200) return 'Название не может быть длиннее 200 символов';
+    if ((addFormData.description || '').length > 1000) return 'Описание не может быть длиннее 1000 символов';
     if (!addFormData.date) return 'Дата обязательна';
     if (!addFormData.time) return 'Время обязательно';
+    if (addFormData.date < todayStr) return 'Дата события не может быть в прошлом';
     return '';
   };
 
@@ -374,6 +381,7 @@ function EventsPage() {
                   value={editFormData.title}
                   onChange={handleEditFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  maxLength={200}
                   required
                 />
               </div>
@@ -398,6 +406,7 @@ function EventsPage() {
                   value={editFormData.date}
                   onChange={handleEditFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  min={todayStr}
                   required
                 />
               </div>
@@ -437,6 +446,7 @@ function EventsPage() {
                   value={editFormData.description || ''}
                   onChange={handleEditFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  maxLength={1000}
                 />
               </div>
               {editFormError && (
@@ -484,6 +494,7 @@ function EventsPage() {
                   value={addFormData.title}
                   onChange={handleAddFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  maxLength={200}
                   required
                 />
               </div>
@@ -508,6 +519,7 @@ function EventsPage() {
                   value={addFormData.date}
                   onChange={handleAddFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  min={todayStr}
                   required
                 />
               </div>
@@ -547,6 +559,7 @@ function EventsPage() {
                   value={addFormData.description || ''}
                   onChange={handleAddFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  maxLength={1000}
                 />
               </div>
               {addFormError && (

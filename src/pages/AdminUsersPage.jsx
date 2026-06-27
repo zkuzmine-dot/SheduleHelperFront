@@ -133,22 +133,41 @@ function AdminUsersPage() {
   // Postgres Integer (тип колонки telegram_id на бэке) ограничен диапазоном int32
   const TELEGRAM_ID_MAX = 2147483647;
 
+  const USERNAME_PATTERN = /^[a-zA-Z0-9_.-]+$/;
+
   const validateAddForm = () => {
     if (!addFormData.username.trim()) return 'Имя пользователя обязательно';
+    if (addFormData.username.trim().length > 100) return 'Имя пользователя не может быть длиннее 100 символов';
+    if (!USERNAME_PATTERN.test(addFormData.username.trim())) return 'Имя пользователя может содержать только латинские буквы, цифры, "_", "." и "-"';
     if (!addFormData.password.trim()) return 'Пароль обязателен';
     if (!addFormData.telegram_id || isNaN(parseInt(addFormData.telegram_id))) return 'Telegram ID должен быть числом';
     if (parseInt(addFormData.telegram_id) < 1 || parseInt(addFormData.telegram_id) > TELEGRAM_ID_MAX) return `Telegram ID должен быть от 1 до ${TELEGRAM_ID_MAX}`;
     if (!roles.includes(addFormData.role)) return 'Неверная роль';
-    if (addFormData.subgroup && (isNaN(parseInt(addFormData.subgroup)) || parseInt(addFormData.subgroup) < 1)) return 'Подгруппа должна быть положительным числом';
+    if (addFormData.full_name.length > 150) return 'Полное имя не может быть длиннее 150 символов';
+    if (addFormData.department.length > 100) return 'Кафедра не может быть длиннее 100 символов';
+    if (addFormData.subgroup) {
+      const sub = parseInt(addFormData.subgroup);
+      if (isNaN(sub) || sub < 1) return 'Подгруппа должна быть положительным числом';
+      if (sub > 20) return 'Подгруппа должна быть от 1 до 20';
+    }
     return '';
   };
 
   const validateEditForm = () => {
     if (!editFormData.username.trim()) return 'Имя пользователя обязательно';
+    if (editFormData.username.trim().length > 100) return 'Имя пользователя не может быть длиннее 100 символов';
+    if (editFormData.username.trim() !== selectedUser?.username && !USERNAME_PATTERN.test(editFormData.username.trim()))
+      return 'Имя пользователя может содержать только латинские буквы, цифры, "_", "." и "-"';
     if (!editFormData.telegram_id || isNaN(parseInt(editFormData.telegram_id))) return 'Telegram ID должен быть числом';
     if (parseInt(editFormData.telegram_id) < 1 || parseInt(editFormData.telegram_id) > TELEGRAM_ID_MAX) return `Telegram ID должен быть от 1 до ${TELEGRAM_ID_MAX}`;
     if (!roles.includes(editFormData.role)) return 'Неверная роль';
-    if (editFormData.subgroup && (isNaN(parseInt(editFormData.subgroup)) || parseInt(editFormData.subgroup) < 1)) return 'Подгруппа должна быть положительным числом';
+    if (editFormData.full_name.length > 150) return 'Полное имя не может быть длиннее 150 символов';
+    if (editFormData.department.length > 100) return 'Кафедра не может быть длиннее 100 символов';
+    if (editFormData.subgroup) {
+      const sub = parseInt(editFormData.subgroup);
+      if (isNaN(sub) || sub < 1) return 'Подгруппа должна быть положительным числом';
+      if (sub > 20) return 'Подгруппа должна быть от 1 до 20';
+    }
     return '';
   };
 
@@ -357,6 +376,7 @@ function AdminUsersPage() {
                   value={addFormData.username}
                   onChange={handleAddFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  maxLength={100}
                   required
                 />
               </div>
@@ -405,6 +425,7 @@ function AdminUsersPage() {
                   value={addFormData.full_name}
                   onChange={handleAddFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  maxLength={150}
                 />
               </div>
               <div>
@@ -430,6 +451,7 @@ function AdminUsersPage() {
                   onChange={handleAddFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   min="1"
+                  max="20"
                 />
               </div>
               <div>
@@ -440,6 +462,7 @@ function AdminUsersPage() {
                   value={addFormData.department}
                   onChange={handleAddFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  maxLength={100}
                 />
               </div>
               {addFormError && (
@@ -487,6 +510,7 @@ function AdminUsersPage() {
                   value={editFormData.username}
                   onChange={handleEditFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  maxLength={100}
                   required
                 />
               </div>
@@ -524,6 +548,7 @@ function AdminUsersPage() {
                   value={editFormData.full_name}
                   onChange={handleEditFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  maxLength={150}
                 />
               </div>
               <div>
@@ -549,6 +574,7 @@ function AdminUsersPage() {
                   onChange={handleEditFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   min="1"
+                  max="20"
                 />
               </div>
               <div>
@@ -559,6 +585,7 @@ function AdminUsersPage() {
                   value={editFormData.department}
                   onChange={handleEditFormChange}
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  maxLength={100}
                 />
               </div>
               {editFormError && (
